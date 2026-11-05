@@ -42,7 +42,7 @@ ordersRouter.get('/lookup', rateLimit(30, 60_000), async (req, res) => {
   const row = await findOrder(id);
   if (!row) throw notFound('No order was found with that id.');
 
-  const isOwner = req.user && row.user_id === req.user.id;
+  const isOwner = req.user && row.userId === req.user.id;
 
   if (!isOwner) {
     const phone = normalisePhone(req.query.phone);
@@ -56,14 +56,14 @@ ordersRouter.get('/lookup', rateLimit(30, 60_000), async (req, res) => {
 
 ordersRouter.get('/:id', requireAuth, async (req, res) => {
   const row = await findOrder(req.params.id);
-  if (!row || row.user_id !== req.user.id) throw notFound('No order was found with that id.');
+  if (!row || row.userId !== req.user.id) throw notFound('No order was found with that id.');
   res.json({ ok: true, order: await shapeOrder(row) });
 });
 
 /** A customer may cancel their own order until it ships. */
 ordersRouter.post('/:id/cancel', requireAuth, rateLimit(10, 60_000), async (req, res) => {
   const row = await findOrder(req.params.id);
-  if (!row || row.user_id !== req.user.id) throw notFound('No order was found with that id.');
+  if (!row || row.userId !== req.user.id) throw notFound('No order was found with that id.');
 
   if (!['pending', 'confirmed', 'packed'].includes(row.status)) {
     throw new HttpError(

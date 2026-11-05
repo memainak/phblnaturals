@@ -133,5 +133,5 @@ export function orderId() {
 
 export const nowIso = () => new Date().toISOString();
 
-/** A Date `days` from now — passed straight to Postgres as a timestamptz. */
+/** A Date `days` from now — stored as a Firestore timestamp. */
 export const addDays = days => new Date(Date.now() + days * 86_400_000);

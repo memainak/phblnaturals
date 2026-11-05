@@ -1,19 +1,27 @@
 import express from 'express';
-import { one, query } from '../db.js';
+import { messages, newsletter, nextId, serverTimestamp } from '../db.js';
 import { rateLimit } from '../middleware.js';
 import { normalisePhone, requireEmail, requireStr, str } from '../util.js';
 
 export const contentRouter = express.Router();
 
-const subscribe = email =>
-  query(
-    `INSERT INTO newsletter (email) VALUES ($1)
-     ON CONFLICT (email) DO UPDATE SET active = TRUE`,
-    [email]
-  );
+/** The email address is the document id, so subscribing twice is idempotent. */
+async function subscribe(email) {
+  const ref = newsletter().doc(email);
+  const existing = await ref.get();
 
-const unsubscribe = email =>
-  query('UPDATE newsletter SET active = FALSE WHERE email = $1', [email]);
+  if (existing.exists) {
+    await ref.update({ active: true });
+    return;
+  }
+
+  await ref.set({ email, active: true, createdAt: serverTimestamp() });
+}
+
+const unsubscribe = async email => {
+  const ref = newsletter().doc(email);
+  if ((await ref.get()).exists) await ref.update({ active: false });
+};
 
 /** POST /api/newsletter { email } — the footer subscribe form. */
 contentRouter.post('/newsletter', rateLimit(10, 60 * 60_000), async (req, res) => {
@@ -39,15 +47,24 @@ contentRouter.post('/contact', rateLimit(5, 60 * 60_000), async (req, res) => {
   const subject = str(req.body?.subject, 160);
   const phone = normalisePhone(req.body?.phone);
 
-  const row = await one(
-    `INSERT INTO messages (name, email, phone, subject, message)
-     VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-    [name, email, phone, subject, message]
-  );
+  // Messages keep sequential numeric ids: the API has always returned a number
+  // here, and the admin dashboard addresses them by it.
+  const id = await nextId('messages');
+
+  await messages().doc(String(id)).set({
+    id,
+    name,
+    email,
+    phone,
+    subject,
+    message,
+    handled: false,
+    createdAt: serverTimestamp()
+  });
 
   res.status(201).json({
     ok: true,
-    id: row.id,
+    id,
     message: 'Thank you for writing in. We will get back to you shortly.'
   });
 });

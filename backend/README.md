@@ -4,11 +4,21 @@ The storefront API behind `frontend/phbl_naturals_website`: catalogue, customer
 accounts, cart, orders, Razorpay payments, newsletter, contact messages and an
 admin dashboard.
 
-Node 22+ only. It uses the built-in `node:sqlite` and `node:crypto`, so the only
-dependencies are Express, dotenv and the Razorpay SDK — no native build step, no
-separate database server.
+Node 22. Data lives in **Firestore**, reached through the Firebase Admin SDK;
+passwords and session tokens use the built-in `node:crypto`. The same Express
+app runs two ways: `node server.js` locally, and as a single Cloud Function
+(`functions.js`) in production.
 
 ## Run it
+
+The Firestore emulator needs a Java runtime (`brew install openjdk`). Start it
+in one terminal:
+
+```bash
+npm run emulator
+```
+
+Then the server in another:
 
 ```bash
 cd backend
@@ -21,11 +31,13 @@ npm run dev
 - API health — http://localhost:4000/api/health
 - Admin — http://localhost:4000/admin.html (paste your `ADMIN_KEY`)
 
-The catalogue is seeded automatically on first boot from `src/catalogue.js`, and
-`data/phbl.db` is created next to it. Delete that file to start over.
+The catalogue is seeded automatically on first boot from `src/catalogue.js`.
+`.env.example` also documents running against the real Firestore with a
+service-account key, but the emulator is the safer default: the live database
+holds real orders.
 
 ```bash
-npm run smoke   # 67 end-to-end checks against a scratch database
+npm run smoke   # 68 end-to-end checks against the emulator
 ```
 
 ## How the frontend is wired up
@@ -153,7 +165,7 @@ Payment: `unpaid → paid`, or `failed` / `refunded`.
 4. Add live Razorpay keys and register the webhook URL.
 5. Check `FREE_SHIPPING_OVER`, `SHIPPING_FLAT` and `COD_FEE` against real
    shipping costs.
-6. Back up `data/phbl.db` on a schedule — it holds every order and customer.
+6. Turn on Firestore backups (console > Firestore > Backups) — the database holds every order and customer.
 7. Wire up transactional email (order confirmations are stored, not emailed) and
    decide on Google / OTP sign-in if you want the buttons on the page to work.
 
@@ -161,10 +173,12 @@ Payment: `unpaid → paid`, or `failed` / `refunded`.
 
 ```
 backend/
-  server.js               boot, middleware order, static + bridge injection
+  server.js               local boot: middleware order, static + bridge injection
+  functions.js            Cloud Functions entry (same app, API only)
   src/
     config.js             env, defaults, production guards
-    db.js                 SQLite schema and transactions
+    db.js                 Firestore connection, collections, transactions
+    accounts.js           users, sessions, email/phone uniqueness claims
     catalogue.js          seed product data
     seed.js               idempotent seeding (keeps admin stock edits)
     util.js               validation, scrypt passwords, ids

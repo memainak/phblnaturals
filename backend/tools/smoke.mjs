@@ -6,8 +6,6 @@
  *   npm run smoke
  */
 import { spawn } from 'node:child_process';
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,11 +14,38 @@ const PORT = 4987;
 const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN_KEY = 'smoke-admin-key';
 
-// The suite runs against a throwaway database so a developer's own data is
-// never touched: a scratch PGlite directory by default, or SMOKE_DATABASE_URL
-// when you want to check the port against real Postgres.
-const SCRATCH = fs.mkdtempSync(path.join(os.tmpdir(), 'phbl-smoke-'));
-const SMOKE_DATABASE_URL = process.env.SMOKE_DATABASE_URL || '';
+// The suite runs against the Firestore emulator, never a real database, and
+// wipes it before starting so each run begins from an empty shop. Start the
+// emulator first:  npm run emulator
+const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'phbl-naturals-local';
+
+const EMULATOR_DOCS = `http://${EMULATOR_HOST}/emulator/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+
+async function requireEmulator() {
+  try {
+    const response = await fetch(`http://${EMULATOR_HOST}/`);
+    if (!response.ok && response.status !== 404) throw new Error(`status ${response.status}`);
+  } catch (error) {
+    console.error(
+      `\nThe Firestore emulator is not answering at ${EMULATOR_HOST}.\n` +
+        `Start it in another terminal with:  npm run emulator\n` +
+        `(${error.message})\n`
+    );
+    process.exit(1);
+  }
+}
+
+/** Deletes every document in the emulated project. */
+async function wipeEmulator() {
+  const response = await fetch(EMULATOR_DOCS, { method: 'DELETE' });
+  if (!response.ok) {
+    throw new Error(`could not clear the emulator: HTTP ${response.status}`);
+  }
+}
+
+await requireEmulator();
+await wipeEmulator();
 
 let passed = 0;
 const failures = [];
@@ -90,10 +115,10 @@ const child = spawn(process.execPath, ['server.js'], {
     SESSION_SECRET: 'smoke-session-secret',
     RAZORPAY_KEY_ID: '',
     RAZORPAY_KEY_SECRET: '',
-    DATABASE_URL: SMOKE_DATABASE_URL,
-    POSTGRES_URL: '',
-    // Ignored when SMOKE_DATABASE_URL is set; otherwise PGlite lives here.
-    PHBL_DATA_DIR: SCRATCH
+    FIRESTORE_EMULATOR_HOST: EMULATOR_HOST,
+    FIREBASE_PROJECT_ID: PROJECT_ID,
+    // A key file would override the emulator; make sure none is inherited.
+    GOOGLE_APPLICATION_CREDENTIALS: ''
   },
   stdio: ['ignore', 'pipe', 'pipe']
 });
@@ -104,11 +129,6 @@ child.stderr.on('data', d => serverLog.push(d.toString()));
 
 function restore() {
   child.kill('SIGKILL');
-  try {
-    fs.rmSync(SCRATCH, { recursive: true, force: true });
-  } catch {
-    /* the scratch directory is already gone */
-  }
 }
 
 try {
@@ -118,7 +138,7 @@ try {
   console.log('\nhealth, config and catalogue');
   const health = await call('/api/health');
   ok('GET /api/health', health.status === 200 && health.data.ok);
-  ok('running on Postgres', ['postgres', 'pglite'].includes(health.data.database),
+  ok('running on Firestore', ['firestore', 'firestore-emulator'].includes(health.data.database),
     `database ${health.data.database}`);
 
   const conf = await call('/api/config');

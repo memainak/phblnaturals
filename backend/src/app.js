@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
-import { ROOT, config, razorpayEnabled, usingManagedPostgres } from './config.js';
+import { ROOT, config, razorpayEnabled, usingEmulator } from './config.js';
 import { cleanupExpiredSessions, dbKind, initDb } from './db.js';
 import {
   attachUser,
@@ -160,4 +160,4 @@ export function createApp({ serveFrontend = true } = {}) {
   return app;
 }
 
-export { usingManagedPostgres };
+export { usingEmulator };

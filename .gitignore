@@ -7,3 +7,9 @@ phbl_naturals_website_final.zip
 
 # Build output and local deps
 dist/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

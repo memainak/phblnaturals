@@ -1,5 +1,5 @@
 /**
- * Builds the static storefront that Vercel serves from dist/.
+ * Builds the static storefront that Firebase Hosting serves from dist/.
  *
  * The storefront folder is read-only and must stay that way, so nothing in it
  * is modified: its files are copied out, and the API bridge script tag is

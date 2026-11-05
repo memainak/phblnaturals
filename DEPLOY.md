@@ -1,133 +1,207 @@
-# Deploying PHBL Naturals to Vercel
+# Deploying PHBL Naturals to Firebase
 
-The repo is ready to deploy. Everything below is done once; after that every
-`git push` to `main` redeploys automatically.
+Everything below is done once. After that, `npm run deploy` from the repository
+root pushes the whole site.
 
-- Static storefront → Vercel's CDN, built from `frontend/phbl_naturals_website`
+- Static storefront → Firebase Hosting, built from `frontend/phbl_naturals_website`
   into `dist/` by `scripts/build-static.mjs`
-- API → one Vercel Function at `api/index.js`, running the Express app
-- Data → Postgres (Neon or Vercel Postgres)
+- API → one Cloud Function (`api`, region `asia-south1`) running the Express app
+- Data → Firestore
+
+The project is already set in `.firebaserc`: **phblnaturals-50d1c**.
 
 The storefront folder is never modified. The build copies it and injects the
 `/storefront-api.js` tag into the copy.
 
-## 1. Fix the existing project (do not create a new one)
+## 1. Sign in and pick the plan
 
-You already have two Vercel projects connected to `memainak/phblnaturals`:
-**`backend`** and **`server`**. They are not stray — both auto-deploy on every
-push, and both have **failed on every push since the first commit**, because
-each points at a subfolder. The function entry (`api/index.js`) and the static
-build both live at the repository root.
+```bash
+firebase login
+```
 
-So repurpose one instead of deleting and re-importing — it keeps the GitHub
-connection that already works.
+Cloud Functions requires the **Blaze** (pay-as-you-go) plan — the free Spark
+plan cannot run functions at all, and a function on Spark could not reach any
+outside service even if it could run. Blaze has a free monthly allowance that a
+shop of this size will most likely stay inside, but it needs a card on file.
 
-In **`backend` → Settings → Build and Deployment**:
+Upgrade at **console.firebase.google.com → phblnaturals-50d1c → ⚙ → Usage and
+billing → Modify plan**. Set a budget alert while you are there.
 
-| Setting | Change to |
+## 2. Create the Firestore database
+
+In the console: **Build → Firestore Database → Create database**.
+
+| Choice | Set it to |
 | --- | --- |
-| Root Directory | `./` (clear it — currently `backend`) |
-| Framework Preset | Other (currently Express) |
-| Build Command | `node scripts/build-static.mjs` |
-| Output Directory | `dist` |
-| Node.js Version | 22.x |
+| Mode | **Production mode** — the API is the only client, and `firestore.rules` denies everything else |
+| Location | **asia-south1 (Mumbai)**, matching the function's region |
 
-Rename it to something sensible while you are there (**Settings → General →
-Project Name**), since `backend` now serves the whole site.
+The location is permanent, so get it right the first time. Any location works,
+but one far from `asia-south1` adds latency to every order.
 
-Then delete the **`server`** project — it points at the old `server/` folder,
-which is superseded, and leaving it connected means a failed deployment email
-on every push.
+There are no tables to create. The collections appear on first write, and the
+catalogue seeds itself on the first request after deploy.
 
-### Turn off Vercel Authentication
+## 3. Set the secrets
 
-`backend` currently has **Vercel Authentication enabled for all deployments
-except custom domains**. That means anyone opening the `.vercel.app` URL is
-asked to log into Vercel first — your shoppers cannot see the store.
+These live in Secret Manager, never in the repository. Each command prompts for
+the value:
 
-**Settings → Deployment Protection → Vercel Authentication → Disabled**, or
-add a custom domain, which is exempt.
+```bash
+firebase functions:secrets:set SESSION_SECRET
+```
 
-## 2. Add a database
+```bash
+firebase functions:secrets:set ADMIN_KEY
+```
 
-In the project: **Storage → Create Database → Postgres** (Neon). Vercel adds
-`DATABASE_URL` and `POSTGRES_URL` to the project automatically — the server
-reads either.
+Generate each of those two as a long random string:
 
-Nothing else is needed: the schema is created and the catalogue seeded on the
-first request after deploy.
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
 
-## 3. Set the environment variables
+Then the Razorpay keys, from **Razorpay dashboard → Account & Settings → API
+Keys**:
 
-**Settings → Environment Variables**, for Production and Preview:
+```bash
+firebase functions:secrets:set RAZORPAY_KEY_ID
+```
 
-| Name | Value |
-| --- | --- |
-| `SESSION_SECRET` | a long random string — `openssl rand -hex 48` |
-| `ADMIN_KEY` | another long random string; this opens `/admin.html` |
-| `NODE_ENV` | `production` |
-| `RAZORPAY_KEY_ID` | from the Razorpay dashboard (optional at first) |
-| `RAZORPAY_KEY_SECRET` | from the Razorpay dashboard (optional at first) |
-| `RAZORPAY_WEBHOOK_SECRET` | set after step 5 |
+```bash
+firebase functions:secrets:set RAZORPAY_KEY_SECRET
+```
 
-Do not copy the values from your local `backend/.env`. That file is gitignored
-and should stay local; generate fresh secrets for production.
+```bash
+firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET
+```
 
-Without the Razorpay keys the site still works — cash on delivery only, and
-online orders are saved as `pending` with a clear message to the shopper.
+All five must exist before the first deploy, because `functions.js` declares
+them — set the Razorpay ones to a single space for now if you do not have the
+keys yet. Without real keys the shop runs cash-on-delivery only, and online
+orders are saved as `pending` with a clear message to the shopper.
 
-In production the server **refuses to start** without `SESSION_SECRET`,
-`ADMIN_KEY` and `DATABASE_URL`. That is deliberate: a missing database would
-otherwise lose every order silently.
+In production the server **refuses to start** without `SESSION_SECRET` and
+`ADMIN_KEY`. That is deliberate: a missing admin key would leave the dashboard
+unreachable, and a missing session secret would sign every customer out on each
+deploy.
 
 ## 4. Deploy
 
-Click **Deploy**, then check:
+```bash
+npm run deploy
+```
 
-- `https://<your-app>.vercel.app/api/health` → `"database": "postgres"`
-- `https://<your-app>.vercel.app/` → the storefront, with products loaded
-- `https://<your-app>.vercel.app/admin.html` → paste your `ADMIN_KEY`
+That builds `dist/`, then pushes Firestore rules and indexes, the function, and
+Hosting. The first run takes several minutes while Google enables Cloud Build,
+Artifact Registry and Secret Manager, and it may ask you to confirm each.
 
-If health reports `"pglite"`, `DATABASE_URL` did not reach the function — the
-site would lose data, so fix that before taking orders.
+To push one piece at a time:
 
-## 5. Razorpay webhook
+```bash
+npm run deploy:rules && npm run deploy:api && npm run deploy:hosting
+```
+
+## 5. Check it
+
+```bash
+curl https://phblnaturals-50d1c.web.app/api/health
+```
+
+- `"database": "firestore"` — correct
+- `"database": "firestore-emulator"` — `FIRESTORE_EMULATOR_HOST` leaked into
+  the deployed config. Stop and fix it; nothing would be saved.
+
+Then in a browser:
+
+- `https://phblnaturals-50d1c.web.app/` — the storefront, with products loaded
+  from the API rather than the hardcoded demo list
+- `https://phblnaturals-50d1c.web.app/admin.html` — paste your `ADMIN_KEY`
+
+Place one cash-on-delivery order and confirm it appears in the admin dashboard
+and that the product's stock went down by the right amount. That single check
+exercises the pricing, the stock reservation and the order write together.
+
+## 6. Razorpay webhook
 
 In the Razorpay dashboard: **Settings → Webhooks → Add**
 
-- URL: `https://<your-app>.vercel.app/api/payments/razorpay/webhook`
+- URL: `https://phblnaturals-50d1c.web.app/api/payments/razorpay/webhook`
 - Events: `payment.captured` and `payment.failed`
-- Copy the signing secret into `RAZORPAY_WEBHOOK_SECRET` and redeploy
+- Put the signing secret into `RAZORPAY_WEBHOOK_SECRET` and redeploy the
+  function
 
-The webhook is the backstop for when a shopper closes the tab mid-payment.
-It is verified against the raw request bytes, so it must stay mounted ahead of
-the JSON body parser — it already is.
+The webhook is the backstop for when a shopper closes the tab mid-payment. It
+is verified against the raw request bytes, so it must stay mounted ahead of the
+JSON body parser — it already is, in `src/app.js`.
 
-## 6. Custom domain
+## 7. Custom domain
 
-**Settings → Domains → Add**, then point the DNS records Vercel shows at it.
-
-Session cookies are `secure` in production, so the site must be served over
-HTTPS — Vercel does that automatically.
+**Hosting → Add custom domain**, then point the DNS records Firebase shows at
+it. Session cookies are `secure` in production, so the site must be served over
+HTTPS; Firebase issues the certificate automatically.
 
 ## Running it locally
 
-No database server needed. PGlite (real Postgres compiled to WASM) is used
-whenever `DATABASE_URL` is absent:
+The Firestore emulator needs a Java runtime, which this machine does not have
+yet:
+
+```bash
+brew install openjdk
+```
+
+```bash
+sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+```
+
+Then, in one terminal:
+
+```bash
+npm run emulator
+```
+
+And in another:
 
 ```bash
 cd backend && npm install && npm run dev
 ```
 
 ```bash
-npm run smoke   # 68 end-to-end checks
+npm run smoke   # 68 end-to-end checks, against the emulator
 ```
 
-To run the tests against real Postgres instead:
+The suite wipes the emulator before each run and never touches the real
+database. `backend/.env.example` documents the alternative — pointing the
+server at the live Firestore with a service-account key — but prefer the
+emulator, since the live database holds real orders.
 
-```bash
-SMOKE_DATABASE_URL="postgres://…" npm run smoke
-```
+`npm install` warns that the project wants Node 22 while this machine runs
+Node 24. That is only a warning: 22 is pinned because it is what Cloud
+Functions runs.
+
+## What the port to Firestore changed
+
+Worth knowing, because it is not a like-for-like swap:
+
+- **Stock reservation** is now a Firestore transaction that reads every
+  product, checks each one, then writes. If another shopper touches the same
+  product first, Firestore aborts and re-runs it, so the last unit still cannot
+  be sold twice.
+- **Order line items** live in an `items` array on the order document rather
+  than a separate table, so reading an order is one document read.
+- **Unique emails and mobile numbers** are enforced by claim documents in
+  `userEmails/` and `userPhones/`, written in the same transaction as the
+  account. Firestore has no unique constraint of its own.
+- **Admin order search** has no equivalent of `ILIKE`, so it reads the 2,000
+  most recent orders and filters them in memory. Responses say `scanCap` when
+  they depend on that window.
+- **The dashboard statistics** are totalled in memory from that same window,
+  since Firestore cannot join or group. Both numbers are honest at shop scale;
+  past tens of thousands of orders they should become counters maintained on
+  each write.
+- **User ids are now strings** (Firestore auto-ids) instead of integers.
+  Product and message ids stayed numeric, because the API contract promises a
+  number there.
 
 ## Before taking real money
 
@@ -136,5 +210,6 @@ SMOKE_DATABASE_URL="postgres://…" npm run smoke
 2. Set real stock levels in the admin dashboard
 3. Switch Razorpay from test keys to live keys, and place one real order
 4. Check `FREE_SHIPPING_OVER`, `SHIPPING_FLAT` and `COD_FEE` against real costs
-5. Set up Neon's backups — the database holds every order and customer
+5. Turn on Firestore backups — **Firestore → Backups** — the database holds
+   every order and customer
 6. Add transactional email; order confirmations are stored, not emailed
