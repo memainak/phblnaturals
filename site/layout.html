@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} | {{brand}}</title>
+  <meta name="description" content="{{description}}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/site.css">
+</head>
+<body class="policy-page">
+  <header class="policy-header">
+    <a class="policy-brand" href="/"><img src="/assets/phbl-logo.jpg" alt="{{brand}}"></a>
+    <a class="policy-back" href="/">&larr; Back to store</a>
+  </header>
+
+  <main class="policy-main">
+    <p class="policy-eyebrow">LEGAL</p>
+    <h1>{{title}}</h1>
+    <p class="policy-updated">Last updated: {{updated}}</p>
+    <article class="policy-body">
+{{body}}
+    </article>
+  </main>
+
+  <footer class="policy-footer">
+    <nav aria-label="Policies">
+      <a href="/privacy-policy.html">Privacy Policy</a>
+      <a href="/refund-policy.html">Refund Policy</a>
+      <a href="/terms-and-conditions.html">Terms &amp; Conditions</a>
+    </nav>
+    <p>&copy; {{year}} {{brand}}. All rights reserved.</p>
+    <p class="dev-credit">Developed by <a href="https://ad-venture.in" target="_blank" rel="noopener">Ad-Venture (ad-venture.in)</a></p>
+  </footer>
+</body>
+</html>
