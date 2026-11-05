@@ -3,12 +3,12 @@
  *
  * Hosting serves the static storefront from dist/ and rewrites /api/** to this
  * one function, which is the same Express app that `node server.js` runs
- * locally. Firestore is reached through the ambient service account, so no
- * credentials are configured here.
+ * locally. The data lives in Supabase Postgres, reached over DATABASE_URL.
  *
  * The sensitive values live in Secret Manager, not in this file and not in the
  * repository. Create them once per project:
  *
+ *   firebase functions:secrets:set DATABASE_URL
  *   firebase functions:secrets:set SESSION_SECRET
  *   firebase functions:secrets:set ADMIN_KEY
  *   firebase functions:secrets:set RAZORPAY_KEY_ID
@@ -23,6 +23,7 @@ import { defineSecret } from 'firebase-functions/params';
 import { onRequest } from 'firebase-functions/v2/https';
 import { createApp } from './src/app.js';
 
+const DATABASE_URL = defineSecret('DATABASE_URL');
 const SESSION_SECRET = defineSecret('SESSION_SECRET');
 const ADMIN_KEY = defineSecret('ADMIN_KEY');
 const RAZORPAY_KEY_ID = defineSecret('RAZORPAY_KEY_ID');
@@ -38,6 +39,7 @@ const app = createApp({ serveFrontend: false });
 export const api = onRequest(
   {
     secrets: [
+      DATABASE_URL,
       SESSION_SECRET,
       ADMIN_KEY,
       RAZORPAY_KEY_ID,

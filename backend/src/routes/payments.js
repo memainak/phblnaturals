@@ -2,11 +2,11 @@ import crypto from 'node:crypto';
 import express from 'express';
 import Razorpay from 'razorpay';
 import { config, razorpayEnabled } from '../config.js';
+import { one } from '../db.js';
 import { rateLimit } from '../middleware.js';
 import {
   attachRazorpayOrder,
   findOrder,
-  findOrderByRazorpayId,
   markPaid,
   markPaymentFailed,
   shapeOrder
@@ -46,15 +46,15 @@ paymentsRouter.post('/razorpay/order', rateLimit(20, 60_000), async (req, res) =
 
   const row = await findOrder(req.body?.orderId);
   if (!row) throw notFound('No order was found with that id.');
-  if (row.paymentStatus === 'paid') throw bad('That order has already been paid.');
+  if (row.payment_status === 'paid') throw bad('That order has already been paid.');
   if (row.status === 'cancelled') throw bad('That order was cancelled.');
-  if (row.paymentMethod === 'cod') throw bad('That order is set to cash on delivery.');
+  if (row.payment_method === 'cod') throw bad('That order is set to cash on delivery.');
 
   const rzpOrder = await razorpay.orders.create({
     amount: row.total * 100, // paise
     currency: 'INR',
     receipt: row.id,
-    notes: { orderId: row.id, customer: row.customerName }
+    notes: { orderId: row.id, customer: row.customer_name }
   });
 
   await attachRazorpayOrder(row.id, rzpOrder.id);
@@ -66,7 +66,7 @@ paymentsRouter.post('/razorpay/order', rateLimit(20, 60_000), async (req, res) =
     amount: rzpOrder.amount,
     currency: rzpOrder.currency,
     orderId: row.id,
-    prefill: { name: row.customerName, email: row.email, contact: row.phone }
+    prefill: { name: row.customer_name, email: row.email, contact: row.phone }
   });
 });
 
@@ -95,7 +95,7 @@ paymentsRouter.post('/razorpay/verify', rateLimit(20, 60_000), async (req, res) 
     expected.length === signature.length &&
     crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 
-  const row = await findOrderByRazorpayId(razorpayOrderId);
+  const row = await one('SELECT * FROM orders WHERE razorpay_order_id = $1', [razorpayOrderId]);
   if (!row) throw notFound('That payment does not match a known order.');
 
   if (!valid) {
@@ -137,7 +137,7 @@ export async function razorpayWebhook(req, res) {
   const row = ourOrderId
     ? await findOrder(ourOrderId)
     : payment?.order_id
-      ? await findOrderByRazorpayId(payment.order_id)
+      ? await one('SELECT * FROM orders WHERE razorpay_order_id = $1', [payment.order_id])
       : null;
 
   if (row) {
@@ -164,9 +164,9 @@ paymentsRouter.get('/status/:orderId', rateLimit(60, 60_000), async (req, res) =
     ok: true,
     orderId: row.id,
     status: row.status,
-    paymentStatus: row.paymentStatus,
+    paymentStatus: row.payment_status,
     order:
-      row.paymentStatus === 'paid'
+      row.payment_status === 'paid'
         ? await shapeOrder(row, { includeContact: false })
         : undefined
   });

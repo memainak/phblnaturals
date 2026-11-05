@@ -1,11 +1,5 @@
-import { cartOf, docsOf, orders, serverTimestamp, toIso, transaction, withId } from './db.js';
-import {
-  getCartRows,
-  isOnlineMethod,
-  priceBasket,
-  releaseStock,
-  reserveStock
-} from './store.js';
+import { all, one, query, transaction } from './db.js';
+import { clearCart, isOnlineMethod, priceBasket, releaseStock, reserveStock } from './store.js';
 import { HttpError, orderId, requireEmail, requirePhone, requireStr, str } from './util.js';
 
 export const ORDER_STATUSES = [
@@ -19,72 +13,57 @@ export const ORDER_STATUSES = [
 
 export const PAYMENT_STATUSES = ['unpaid', 'paid', 'failed', 'refunded'];
 
-const normaliseId = value => String(value ?? '').trim().toUpperCase();
+const ITEM_COLUMNS = `
+  product_id AS "productId", name, size, image,
+  unit_price AS "unitPrice", qty, line_total AS "lineTotal"
+`;
 
-/**
- * Order documents hold their line items in an `items` array, so shaping an
- * order needs no further reads. The signature keeps its options object for the
- * call sites that pass `{ includeContact: false }`.
- */
-export function shapeOrder(row, { includeContact = true } = {}) {
+const selectItems = (orderId_, client = null) => {
+  const sql = `SELECT ${ITEM_COLUMNS} FROM order_items WHERE order_id = $1 ORDER BY id`;
+  return client ? client.query(sql, [orderId_]).then(r => r.rows) : all(sql, [orderId_]);
+};
+
+const iso = value => (value instanceof Date ? value.toISOString() : value);
+
+export async function shapeOrder(row, { includeContact = true, client = null } = {}) {
   if (!row) return null;
 
   const order = {
     id: row.id,
     status: row.status,
-    paymentStatus: row.paymentStatus,
-    paymentMethod: row.paymentMethod,
+    paymentStatus: row.payment_status,
+    paymentMethod: row.payment_method,
     subtotal: row.subtotal,
     shipping: row.shipping,
-    codFee: row.codFee,
+    codFee: row.cod_fee,
     total: row.total,
     currency: 'INR',
-    placedAt: toIso(row.createdAt),
-    updatedAt: toIso(row.updatedAt),
-    items: (row.items ?? []).map(item => ({
-      productId: item.productId,
-      name: item.name,
-      size: item.size ?? '',
-      image: item.image ?? '',
-      unitPrice: item.unitPrice,
-      qty: item.qty,
-      lineTotal: item.lineTotal
-    }))
+    placedAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+    items: await selectItems(row.id, client)
   };
 
   if (includeContact) {
     order.customer = {
-      name: row.customerName,
+      name: row.customer_name,
       email: row.email,
       phone: row.phone,
       address: row.address
     };
-    order.notes = row.notes ?? '';
+    order.notes = row.notes;
   }
-  if (row.razorpayOrderId) order.razorpayOrderId = row.razorpayOrderId;
+  if (row.razorpay_order_id) order.razorpayOrderId = row.razorpay_order_id;
 
   return order;
 }
 
-export async function findOrder(id) {
-  const key = normaliseId(id);
-  if (!key) return null;
-  return withId(await orders().doc(key).get());
-}
-
-export async function findOrderByRazorpayId(razorpayOrderId) {
-  const snapshot = await orders()
-    .where('razorpayOrderId', '==', String(razorpayOrderId ?? '').trim())
-    .limit(1)
-    .get();
-
-  return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-}
+export const findOrder = id =>
+  one('SELECT * FROM orders WHERE id = $1', [String(id || '').trim().toUpperCase()]);
 
 /**
- * Validates the checkout form, re-prices the basket, then reserves stock and
- * writes the order in one Firestore transaction. Prices from the client are
- * ignored.
+ * Validates the checkout form, re-prices the basket from the database,
+ * reserves stock and writes the order — all in one transaction. Prices from
+ * the client are ignored.
  */
 export async function createOrder({ body, user }) {
   const name = requireStr(body?.name ?? body?.fullName ?? user?.name, 'Full name', {
@@ -100,108 +79,119 @@ export async function createOrder({ body, user }) {
     Array.isArray(body?.items) && body.items.length
       ? body.items
       : user
-        ? await getCartRows(user.id)
+        ? await all('SELECT product_id AS "productId", qty FROM carts WHERE user_id = $1', [user.id])
         : [];
 
   const quote = await priceBasket(items, body?.payment ?? body?.paymentMethod ?? 'upi');
 
   const id = orderId();
   const online = isOnlineMethod(quote.paymentMethod);
-  const ref = orders().doc(id);
 
-  await transaction(async tx => {
-    // Reads first: the cart, then every product reserveStock touches.
-    const cartDocs = user ? (await tx.get(cartOf(user.id))).docs : [];
+  return transaction(async client => {
+    await reserveStock(client, quote.items);
 
-    await reserveStock(tx, quote.items);
+    await client.query(
+      `INSERT INTO orders (
+         id, user_id, customer_name, email, phone, address, notes, payment_method,
+         subtotal, shipping, cod_fee, total, status, payment_status
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [
+        id,
+        user?.id ?? null,
+        name,
+        email,
+        phone,
+        address,
+        notes,
+        quote.paymentMethod,
+        quote.subtotal,
+        quote.shipping,
+        quote.codFee,
+        quote.total,
+        // An online order is only confirmed once payment is verified.
+        online ? 'pending' : 'confirmed',
+        'unpaid'
+      ]
+    );
 
-    tx.set(ref, {
-      userId: user?.id ?? null,
-      customerName: name,
-      email,
-      phone,
-      address,
-      notes,
-      paymentMethod: quote.paymentMethod,
-      subtotal: quote.subtotal,
-      shipping: quote.shipping,
-      codFee: quote.codFee,
-      total: quote.total,
-      // An online order is only confirmed once payment is verified.
-      status: online ? 'pending' : 'confirmed',
-      paymentStatus: 'unpaid',
-      razorpayOrderId: null,
-      razorpayPaymentId: null,
-      items: quote.items,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    for (const item of quote.items) {
+      await client.query(
+        `INSERT INTO order_items
+           (order_id, product_id, name, size, image, unit_price, qty, line_total)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [id, item.productId, item.name, item.size, item.image, item.unitPrice, item.qty, item.lineTotal]
+      );
+    }
 
-    for (const doc of cartDocs) tx.delete(doc.ref);
+    if (user) await client.query('DELETE FROM carts WHERE user_id = $1', [user.id]);
+
+    const { rows } = await client.query('SELECT * FROM orders WHERE id = $1', [id]);
+    return { order: await shapeOrder(rows[0], { client }), requiresPayment: online };
   });
-
-  // serverTimestamp() resolves on the server, so the order is read back to get
-  // the real placedAt rather than guessing it here.
-  const stored = await findOrder(id);
-  if (!stored) throw new HttpError(500, 'The order was written but could not be read back.');
-
-  return { order: shapeOrder(stored), requiresPayment: online };
 }
 
 export const attachRazorpayOrder = (id, razorpayOrderId) =>
-  orders().doc(normaliseId(id)).update({ razorpayOrderId, updatedAt: serverTimestamp() });
+  query(`UPDATE orders SET razorpay_order_id = $1, updated_at = now() WHERE id = $2`, [
+    razorpayOrderId,
+    id
+  ]);
 
 export async function markPaid(id, paymentId) {
   const row = await findOrder(id);
   if (!row) throw new HttpError(404, 'Order not found.');
-  if (row.paymentStatus === 'paid') return shapeOrder(row);
+  if (row.payment_status === 'paid') return shapeOrder(row);
 
-  const patch = {
-    paymentStatus: 'paid',
-    updatedAt: serverTimestamp()
-  };
-  if (row.status === 'pending') patch.status = 'confirmed';
-  if (paymentId) patch.razorpayPaymentId = paymentId;
+  await query(
+    `UPDATE orders
+     SET payment_status = 'paid',
+         status = CASE WHEN status = 'pending' THEN 'confirmed' ELSE status END,
+         razorpay_payment_id = COALESCE($1, razorpay_payment_id),
+         updated_at = now()
+     WHERE id = $2`,
+    [paymentId ?? null, id]
+  );
 
-  await orders().doc(row.id).update(patch);
-  return shapeOrder(await findOrder(row.id));
+  return shapeOrder(await findOrder(id));
 }
 
 export async function markPaymentFailed(id, paymentId) {
   const row = await findOrder(id);
-  if (!row || row.paymentStatus === 'paid') return shapeOrder(row);
+  if (!row || row.payment_status === 'paid') return shapeOrder(row);
 
-  const patch = { paymentStatus: 'failed', updatedAt: serverTimestamp() };
-  if (paymentId) patch.razorpayPaymentId = paymentId;
+  await query(
+    `UPDATE orders
+     SET payment_status = 'failed',
+         razorpay_payment_id = COALESCE($1, razorpay_payment_id),
+         updated_at = now()
+     WHERE id = $2`,
+    [paymentId ?? null, id]
+  );
 
-  await orders().doc(row.id).update(patch);
-  return shapeOrder(await findOrder(row.id));
+  return shapeOrder(await findOrder(id));
 }
 
-/**
- * Cancelling returns the reserved stock to the catalogue exactly once. The
- * order document is read inside the transaction, so a second cancel arriving
- * at the same moment is aborted and retried, then sees `cancelled` and stops.
- */
-export async function cancelOrder(id) {
-  const key = normaliseId(id);
-  const ref = orders().doc(key);
+/** Cancelling returns the reserved stock to the catalogue exactly once. */
+export function cancelOrder(id) {
+  return transaction(async client => {
+    // FOR UPDATE keeps a second cancel from double-crediting the stock.
+    const { rows } = await client.query('SELECT * FROM orders WHERE id = $1 FOR UPDATE', [id]);
+    const row = rows[0];
 
-  await transaction(async tx => {
-    const snapshot = await tx.get(ref);
-    if (!snapshot.exists) throw new HttpError(404, 'Order not found.');
-
-    const row = snapshot.data();
-    if (row.status === 'cancelled') return;
+    if (!row) throw new HttpError(404, 'Order not found.');
+    if (row.status === 'cancelled') return shapeOrder(row, { client });
     if (row.status === 'delivered') {
       throw new HttpError(409, 'A delivered order cannot be cancelled.');
     }
 
-    await releaseStock(tx, row.items ?? []);
-    tx.update(ref, { status: 'cancelled', updatedAt: serverTimestamp() });
-  });
+    await releaseStock(client, await selectItems(id, client));
+    await client.query(
+      `UPDATE orders SET status = 'cancelled', updated_at = now() WHERE id = $1`,
+      [id]
+    );
 
-  return shapeOrder(await findOrder(key));
+    const updated = await client.query('SELECT * FROM orders WHERE id = $1', [id]);
+    return shapeOrder(updated.rows[0], { client });
+  });
 }
 
 export async function updateOrderStatus(id, status) {
@@ -216,8 +206,8 @@ export async function updateOrderStatus(id, status) {
     throw new HttpError(409, 'A cancelled order cannot be moved to another status.');
   }
 
-  await orders().doc(row.id).update({ status, updatedAt: serverTimestamp() });
-  return shapeOrder(await findOrder(row.id));
+  await query('UPDATE orders SET status = $1, updated_at = now() WHERE id = $2', [status, id]);
+  return shapeOrder(await findOrder(id));
 }
 
 export async function updatePaymentStatus(id, paymentStatus) {
@@ -229,16 +219,17 @@ export async function updatePaymentStatus(id, paymentStatus) {
   const row = await findOrder(id);
   if (!row) throw new HttpError(404, 'Order not found.');
 
-  await orders().doc(row.id).update({ paymentStatus, updatedAt: serverTimestamp() });
-  return shapeOrder(await findOrder(row.id));
+  await query('UPDATE orders SET payment_status = $1, updated_at = now() WHERE id = $2', [
+    paymentStatus,
+    id
+  ]);
+  return shapeOrder(await findOrder(id));
 }
 
 export async function listOrdersForUser(userId, limit = 50) {
-  const snapshot = await orders()
-    .where('userId', '==', String(userId))
-    .orderBy('createdAt', 'desc')
-    .limit(limit)
-    .get();
-
-  return docsOf(snapshot).map(row => shapeOrder(row));
+  const rows = await all(
+    'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2',
+    [userId, limit]
+  );
+  return Promise.all(rows.map(row => shapeOrder(row)));
 }

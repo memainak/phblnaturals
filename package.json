@@ -3,17 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "PHBL Naturals storefront: static site on Firebase Hosting, Express API on Cloud Functions, Firestore for data.",
+  "description": "PHBL Naturals storefront: static site on Firebase Hosting, Express API on Cloud Functions, Supabase Postgres for data.",
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "dev": "npm --prefix backend run dev",
     "smoke": "npm --prefix backend run smoke",
     "race": "npm --prefix backend run race",
-    "emulator": "firebase emulators:start --only firestore --project phbl-naturals-local",
     "deploy": "npm run build && firebase deploy",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
-    "deploy:api": "firebase deploy --only functions",
-    "deploy:rules": "firebase deploy --only firestore"
+    "deploy:api": "firebase deploy --only functions"
   },
   "engines": {
     "node": ">=22"

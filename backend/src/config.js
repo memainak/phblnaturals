@@ -57,18 +57,17 @@ export const config = {
   // PHBL_DATA_DIR lets the test harness point at a scratch directory.
   dataDir: resolveFromRoot(process.env.PHBL_DATA_DIR, 'data'),
 
-  // Firestore. On Cloud Functions and Cloud Run the project id and the
-  // credentials are both ambient, so none of these need to be set in
-  // production. Locally, either point FIRESTORE_EMULATOR_HOST at the emulator
-  // or set GOOGLE_APPLICATION_CREDENTIALS to a service-account key.
-  firebaseProjectId: (
-    process.env.FIREBASE_PROJECT_ID ||
-    process.env.GCLOUD_PROJECT ||
-    process.env.GOOGLE_CLOUD_PROJECT ||
-    ''
-  ).trim(),
-  firestoreDatabaseId: (process.env.FIRESTORE_DATABASE_ID || '').trim(),
-  firestoreEmulatorHost: (process.env.FIRESTORE_EMULATOR_HOST || '').trim(),
+  // Postgres connection string. Supabase in production; when it is absent the
+  // server falls back to PGlite — real Postgres compiled to WASM, stored in
+  // data/pg — so local development and the test suite need no database server
+  // and no Docker.
+  //
+  // On Cloud Functions, use Supabase's **connection pooler** URI (port 6543),
+  // not the direct one (5432). Each function instance opens its own pool, and
+  // Postgres has a hard connection limit that a handful of cold starts would
+  // otherwise exhaust. See DEPLOY.md.
+  databaseUrl: (process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim(),
+  pgliteDir: path.join(resolveFromRoot(process.env.PHBL_DATA_DIR, 'data'), 'pg'),
 
   corsOrigins: (process.env.CORS_ORIGINS || '')
     .split(',')
@@ -97,8 +96,7 @@ export const razorpayEnabled = Boolean(
   config.razorpay.keyId && config.razorpay.keySecret
 );
 
-/** True when Firestore calls go to the local emulator rather than Google. */
-export const usingEmulator = Boolean(config.firestoreEmulatorHost);
+export const usingManagedPostgres = Boolean(config.databaseUrl);
 
 /** Warnings worth printing at boot, and hard stops in production. */
 export function checkConfig() {
@@ -118,13 +116,13 @@ export function checkConfig() {
   } else if (!config.razorpay.webhookSecret) {
     warnings.push('RAZORPAY_WEBHOOK_SECRET is not set. Payment webhooks will be rejected.');
   }
-  if (usingEmulator) {
+  if (!usingManagedPostgres) {
     warnings.push(
-      `Firestore calls go to the emulator at ${config.firestoreEmulatorHost}. Nothing is written to the real database.`
+      'DATABASE_URL is not set. Using the local PGlite database in data/pg — fine for development, not for production.'
     );
-  } else if (!config.firebaseProjectId && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  } else if (/\.supabase\.(com|co)/.test(config.databaseUrl) && !/:6543\b/.test(config.databaseUrl)) {
     warnings.push(
-      'No Firebase project id and no GOOGLE_APPLICATION_CREDENTIALS. Firestore will fail unless this process runs on Google infrastructure.'
+      'DATABASE_URL points at Supabase but not at the pooler port (6543). On a serverless host this will exhaust the connection limit; use the Connection Pooling URI.'
     );
   }
 
@@ -132,12 +130,9 @@ export function checkConfig() {
     const fatal = [];
     if (!process.env.SESSION_SECRET) fatal.push('SESSION_SECRET');
     if (!config.adminKey) fatal.push('ADMIN_KEY');
-    // Without a project id the Admin SDK cannot find a database at all, and
-    // every order would fail at write time rather than at boot.
-    if (!config.firebaseProjectId && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      fatal.push('FIREBASE_PROJECT_ID');
-    }
-    if (usingEmulator) fatal.push('FIRESTORE_EMULATOR_HOST must not be set in production');
+    // On a serverless host the filesystem is ephemeral, so a local database
+    // would silently lose every order. Managed Postgres is required.
+    if (!usingManagedPostgres) fatal.push('DATABASE_URL');
     if (fatal.length) {
       throw new Error(`Refusing to start in production without: ${fatal.join(', ')}`);
     }

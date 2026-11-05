@@ -3,24 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Backend for the PHBL Naturals storefront: catalogue, accounts, cart, orders, payments and admin. Runs as a Firebase Function over Firestore.",
+  "description": "Backend for the PHBL Naturals storefront: catalogue, accounts, cart, orders, payments and admin. Runs as a Firebase Function over Supabase Postgres.",
   "main": "functions.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
     "seed": "node src/seed.js",
     "smoke": "node tools/smoke.mjs",
-    "race": "node tools/race.mjs",
-    "emulator": "firebase emulators:start --only firestore --project phbl-naturals-local"
+    "race": "node tools/race.mjs"
   },
   "engines": {
     "node": "22"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "firebase-admin": "^13.6.0",
     "firebase-functions": "^6.6.0",
+    "pg": "^8.23.1",
     "razorpay": "^2.9.6"
   }
 }

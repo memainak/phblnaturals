@@ -1,17 +1,6 @@
 import express from 'express';
-import {
-  createSession,
-  createUser,
-  deleteSession,
-  deleteSessionsForUser,
-  findUserByEmail,
-  findUserById,
-  findUserByPhone,
-  setPassword,
-  touchLastLogin,
-  updateUserContact
-} from '../accounts.js';
 import { config } from '../config.js';
+import { one, query } from '../db.js';
 import {
   SESSION_COOKIE,
   clearSessionCookie,
@@ -38,6 +27,10 @@ import {
 
 export const authRouter = express.Router();
 
+const findByEmail = email => one('SELECT * FROM users WHERE email = $1', [email]);
+const findByPhone = phone => one('SELECT * FROM users WHERE phone = $1', [phone]);
+const findById = id => one('SELECT * FROM users WHERE id = $1', [id]);
+
 const publicUser = user => ({
   id: user.id,
   name: user.name,
@@ -50,8 +43,11 @@ async function startSession(res, user, userAgent) {
   const token = randomToken(32);
   const expiresAt = addDays(config.sessionDays);
 
-  await createSession(user.id, sha256(token), expiresAt, userAgent);
-  await touchLastLogin(user.id);
+  await query(
+    'INSERT INTO sessions (token_hash, user_id, expires_at, user_agent) VALUES ($1,$2,$3,$4)',
+    [sha256(token), user.id, expiresAt, String(userAgent || '').slice(0, 200)]
+  );
+  await query('UPDATE users SET last_login_at = now() WHERE id = $1', [user.id]);
 
   setSessionCookie(res, token, expiresAt);
 }
@@ -98,22 +94,18 @@ authRouter.post('/signup', rateLimit(10, 60 * 60_000), async (req, res) => {
   if (!email && !phone) {
     throw bad('Enter an email address or a 10-digit mobile number.');
   }
-
-  // Checked up front for a clear message; createUser repeats the check inside
-  // a transaction, which is what actually prevents a duplicate.
-  if (email && (await findUserByEmail(email))) {
+  if (email && (await findByEmail(email))) {
     throw new HttpError(409, 'An account already exists with that email address. Please sign in.');
   }
-  if (phone && (await findUserByPhone(phone))) {
+  if (phone && (await findByPhone(phone))) {
     throw new HttpError(409, 'An account already exists with that mobile number. Please sign in.');
   }
 
-  const user = await createUser({
-    name,
-    email,
-    phone,
-    passwordHash: hashPassword(password)
-  });
+  const user = await one(
+    `INSERT INTO users (name, email, phone, password_hash)
+     VALUES ($1,$2,$3,$4) RETURNING *`,
+    [name, email || null, phone || null, hashPassword(password)]
+  );
 
   await mergeGuestCart(user.id, req.body?.cart);
   await startSession(res, user, req.get('user-agent'));
@@ -129,10 +121,10 @@ authRouter.post('/login', rateLimit(20, 15 * 60_000), async (req, res) => {
   );
   const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
-  const user = email ? await findUserByEmail(email) : await findUserByPhone(phone);
+  const user = email ? await findByEmail(email) : await findByPhone(phone);
 
   // One message for both cases, so the endpoint does not reveal who has an account.
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  if (!user || !verifyPassword(password, user.password_hash)) {
     throw new HttpError(401, 'Those sign-in details did not match an account.');
   }
 
@@ -146,13 +138,13 @@ authRouter.post('/login', rateLimit(20, 15 * 60_000), async (req, res) => {
 
 authRouter.post('/logout', async (req, res) => {
   const token = req.cookies?.[SESSION_COOKIE];
-  if (token) await deleteSession(sha256(token));
+  if (token) await query('DELETE FROM sessions WHERE token_hash = $1', [sha256(token)]);
   clearSessionCookie(res);
   res.json({ ok: true });
 });
 
 authRouter.post('/logout-all', requireAuth, async (req, res) => {
-  await deleteSessionsForUser(req.user.id);
+  await query('DELETE FROM sessions WHERE user_id = $1', [req.user.id]);
   clearSessionCookie(res);
   res.json({ ok: true });
 });
@@ -164,7 +156,7 @@ authRouter.get('/me', (req, res) => {
 });
 
 authRouter.patch('/me', requireAuth, rateLimit(20, 60_000), async (req, res) => {
-  const current = await findUserById(req.user.id);
+  const current = await findById(req.user.id);
 
   const name =
     req.body?.name === undefined
@@ -175,36 +167,48 @@ authRouter.patch('/me', requireAuth, rateLimit(20, 60_000), async (req, res) => 
   if (req.body?.email !== undefined) {
     email = normaliseEmail(req.body.email) || null;
     if (req.body.email && !email) throw bad('That email address does not look valid.');
+    const clash = email && (await findByEmail(email));
+    if (clash && clash.id !== current.id) {
+      throw new HttpError(409, 'That email address is already used by another account.');
+    }
   }
 
   let phone = current.phone;
   if (req.body?.phone !== undefined) {
     phone = normalisePhone(req.body.phone) || null;
     if (req.body.phone && !phone) throw bad('That mobile number does not look valid.');
+    const clash = phone && (await findByPhone(phone));
+    if (clash && clash.id !== current.id) {
+      throw new HttpError(409, 'That mobile number is already used by another account.');
+    }
   }
 
   if (!email && !phone) {
     throw bad('Keep at least an email address or a mobile number on the account.');
   }
 
-  // updateUserContact rejects an address already claimed by another account.
-  const updated = await updateUserContact(current.id, { name, email, phone });
+  await query('UPDATE users SET name = $1, email = $2, phone = $3 WHERE id = $4', [
+    name,
+    email,
+    phone,
+    current.id
+  ]);
 
-  res.json({ ok: true, user: publicUser(updated) });
+  res.json({ ok: true, user: publicUser({ ...current, name, email, phone }) });
 });
 
 authRouter.post('/change-password', requireAuth, rateLimit(10, 60 * 60_000), async (req, res) => {
-  const current = await findUserById(req.user.id);
+  const current = await findById(req.user.id);
 
-  if (!verifyPassword(String(req.body?.currentPassword ?? ''), current.passwordHash)) {
+  if (!verifyPassword(String(req.body?.currentPassword ?? ''), current.password_hash)) {
     throw new HttpError(401, 'Your current password is not correct.');
   }
 
   const next = requirePassword(req.body?.newPassword);
-  await setPassword(current.id, hashPassword(next));
+  await query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashPassword(next), current.id]);
 
   // Every other session is invalidated; this one is re-issued.
-  await deleteSessionsForUser(current.id);
+  await query('DELETE FROM sessions WHERE user_id = $1', [current.id]);
   await startSession(res, current, req.get('user-agent'));
 
   res.json({ ok: true, message: 'Password updated. Other devices have been signed out.' });

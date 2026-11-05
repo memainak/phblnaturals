@@ -1,219 +1,284 @@
 /**
- * Firestore data layer.
+ * Postgres data layer.
  *
- * One Firestore database behind a small set of collection handles. Credentials
- * are resolved by the Admin SDK in this order:
+ * Two drivers behind one async interface:
+ *   - DATABASE_URL set  → node-postgres pool (Neon, Vercel Postgres, Supabase…)
+ *   - DATABASE_URL unset → PGlite, real Postgres compiled to WASM, kept in
+ *     data/pg, so local development and `npm run smoke` need no server.
  *
- *   1. FIRESTORE_EMULATOR_HOST set  → the local emulator, no credentials
- *   2. GOOGLE_APPLICATION_CREDENTIALS → a service-account key file
- *   3. otherwise                     → the ambient service account, which is
- *      what Cloud Functions and Cloud Run provide
- *
- * Shape of the data:
- *
- *   products/{id}                 id is the numeric product id as a string
- *   users/{userId}                auto-id
- *   users/{userId}/cart/{productId}
- *   sessions/{tokenHash}
- *   orders/{PHBL-XXXXXX}          line items live in an `items` array
- *   newsletter/{email}
- *   messages/{n}                  n from counters/messages
- *   counters/{name}               { value: number }
- *
- * Two deliberate choices:
- *
- *   - Order items are an array field, not a subcollection. They are bounded
- *     (50 lines max, enforced in priceBasket) and always read together with
- *     their order, so a subcollection would cost an extra round trip per order
- *     and buy nothing.
- *   - Documents use camelCase field names, matching the JSON the API returns,
- *     so there is no column-to-field translation layer.
+ * Both speak the same SQL; only the connection differs.
  */
-import { config } from './config.js';
+import fs from 'node:fs';
+import { config, usingManagedPostgres } from './config.js';
 
-let db = null;
-let kind = null;
-let FieldValueRef = null;
-let TimestampRef = null;
+let driver = null;
 
-/* -------------------------------------------------------------- connection */
+/* ----------------------------------------------------------------- driver */
+
+async function createManagedDriver() {
+  const { default: pg } = await import('pg');
+
+  // Hosted Postgres (Neon and friends) requires TLS; a local server usually
+  // does not offer it.
+  const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(config.databaseUrl);
+
+  // On Cloud Functions every instance gets its own pool, so the ceiling is
+  // (instances x max), not max. K_SERVICE is set by the Cloud Run environment
+  // the function runs on; a small pool there keeps a burst of cold starts from
+  // exhausting Postgres. A long-running server has one pool and can hold more.
+  const serverless = Boolean(process.env.K_SERVICE || process.env.FUNCTION_TARGET);
+
+  const pool = new pg.Pool({
+    connectionString: config.databaseUrl,
+    ssl: local ? false : { rejectUnauthorized: false },
+    max: Number(process.env.PG_POOL_MAX) || (serverless ? 2 : 5),
+    // Idle connections are released quickly on serverless: an instance that is
+    // about to be frozen should not sit holding a Postgres connection.
+    idleTimeoutMillis: serverless ? 5_000 : 30_000,
+    connectionTimeoutMillis: 15_000
+  });
+
+  pool.on('error', error => console.error('[db] idle client error', error));
+
+  return {
+    kind: 'postgres',
+    query: (text, params) => pool.query(text, params),
+    // Multi-statement scripts: the simple protocol allows them, prepared
+    // statements do not.
+    exec: text => pool.query(text),
+    async withTransaction(run) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const result = await run({ query: (t, p) => client.query(t, p) });
+        await client.query('COMMIT');
+        return result;
+      } catch (error) {
+        try {
+          await client.query('ROLLBACK');
+        } catch {
+          /* the connection is already gone */
+        }
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+    close: () => pool.end()
+  };
+}
+
+async function createEmbeddedDriver() {
+  // The specifier is held in a variable so bundlers and Vercel's file tracer
+  // do not try to pull PGlite into a serverless build, where it is never used.
+  const pgliteModule = '@electric-sql/pglite';
+  const { PGlite } = await import(pgliteModule);
+
+  fs.mkdirSync(config.dataDir, { recursive: true });
+  const pglite = await PGlite.create({ dataDir: config.pgliteDir });
+
+  // PGlite runs one connection, so transactions are serialised with a queue:
+  // without it two overlapping BEGINs would share a single session.
+  let queue = Promise.resolve();
+
+  return {
+    kind: 'pglite',
+    query: (text, params) => pglite.query(text, params),
+    exec: text => pglite.exec(text),
+    withTransaction(run) {
+      const attempt = queue.then(async () => {
+        await pglite.exec('BEGIN');
+        try {
+          const result = await run({ query: (t, p) => pglite.query(t, p) });
+          await pglite.exec('COMMIT');
+          return result;
+        } catch (error) {
+          try {
+            await pglite.exec('ROLLBACK');
+          } catch {
+            /* already rolled back */
+          }
+          throw error;
+        }
+      });
+
+      // Keep the chain alive even when this transaction rejects.
+      queue = attempt.then(
+        () => undefined,
+        () => undefined
+      );
+      return attempt;
+    },
+    close: () => pglite.close()
+  };
+}
+
+/* ------------------------------------------------------------------- api */
 
 export async function connect() {
-  if (db) return db;
-
-  const [{ initializeApp, applicationDefault, getApps }, firestore] = await Promise.all([
-    import('firebase-admin/app'),
-    import('firebase-admin/firestore')
-  ]);
-
-  const { getFirestore, FieldValue, Timestamp } = firestore;
-  FieldValueRef = FieldValue;
-  TimestampRef = Timestamp;
-
-  if (!getApps().length) {
-    // Against the emulator any project id works, and no credential is read.
-    initializeApp(
-      config.firestoreEmulatorHost
-        ? { projectId: config.firebaseProjectId || 'phbl-naturals-local' }
-        : {
-            credential: applicationDefault(),
-            ...(config.firebaseProjectId ? { projectId: config.firebaseProjectId } : {})
-          }
-    );
+  if (!driver) {
+    driver = usingManagedPostgres ? await createManagedDriver() : await createEmbeddedDriver();
   }
-
-  db = getFirestore(config.firestoreDatabaseId || '(default)');
-
-  // Writing `undefined` throws by default; treating it as "leave the field out"
-  // matches how the route handlers build patch objects.
-  try {
-    db.settings({ ignoreUndefinedProperties: true });
-  } catch {
-    /* settings() throws if the instance has already been used */
-  }
-
-  kind = config.firestoreEmulatorHost ? 'firestore-emulator' : 'firestore';
-  return db;
+  return driver;
 }
 
 const active = () => {
-  if (!db) throw new Error('Firestore is not connected yet. Call initDb() first.');
-  return db;
+  if (!driver) throw new Error('The database is not connected yet. Call initDb() first.');
+  return driver;
 };
 
-export const dbKind = () => kind;
-export const firestore = () => active();
-export const FieldValue = () => FieldValueRef;
-export const Timestamp = () => TimestampRef;
+export const dbKind = () => (driver ? driver.kind : null);
 
-/* ------------------------------------------------------------- collections */
+/** Run a statement. Params are positional: $1, $2 … */
+export const query = (text, params = []) => active().query(text, params);
 
-export const products = () => active().collection('products');
-export const users = () => active().collection('users');
+/** Run a multi-statement script (no parameters). */
+export const exec = text => active().exec(text);
 
-/**
- * Firestore has no unique constraint, so an email or mobile number is claimed
- * by writing a document whose id *is* that value, inside the same transaction
- * that creates or updates the account. A second signup for the same address
- * finds the claim already taken and is rejected.
- */
-export const userEmails = () => active().collection('userEmails');
-export const userPhones = () => active().collection('userPhones');
-export const sessions = () => active().collection('sessions');
-export const orders = () => active().collection('orders');
-export const newsletter = () => active().collection('newsletter');
-export const messages = () => active().collection('messages');
-export const counters = () => active().collection('counters');
-export const cartOf = userId => users().doc(String(userId)).collection('cart');
+/** First row, or null. */
+export const one = async (text, params = []) => (await query(text, params)).rows[0] ?? null;
 
-/* ------------------------------------------------------------------ helpers */
+/** All rows. */
+export const all = async (text, params = []) => (await query(text, params)).rows;
 
-/** Run fn inside a Firestore transaction. All reads must precede all writes. */
-export const transaction = run => active().runTransaction(run);
+/** Run fn inside BEGIN/COMMIT, rolling back on any throw. */
+export const transaction = run => active().withTransaction(run);
 
-export const serverTimestamp = () => FieldValueRef.serverTimestamp();
+export const closeDb = async () => {
+  if (driver) {
+    await driver.close();
+    driver = null;
+  }
+};
 
-/** Firestore Timestamp | Date | string → ISO string, or null. */
-export function toIso(value) {
-  if (!value) return null;
-  if (typeof value === 'string') return value;
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value.toDate === 'function') return value.toDate().toISOString();
-  return null;
-}
+/* ---------------------------------------------------------------- schema */
 
-/** Firestore Timestamp | Date | string → Date, or null. */
-export function toDate(value) {
-  if (!value) return null;
-  if (value instanceof Date) return value;
-  if (typeof value.toDate === 'function') return value.toDate();
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS products (
+  id            INTEGER PRIMARY KEY,
+  slug          TEXT        NOT NULL UNIQUE,
+  name          TEXT        NOT NULL,
+  category      TEXT        NOT NULL,
+  price         INTEGER     NOT NULL CHECK (price >= 0),
+  old_price     INTEGER,
+  badge         TEXT        NOT NULL DEFAULT '',
+  size          TEXT        NOT NULL DEFAULT '',
+  image         TEXT        NOT NULL DEFAULT '',
+  description   TEXT        NOT NULL DEFAULT '',
+  ingredients   TEXT        NOT NULL DEFAULT '',
+  benefits      TEXT        NOT NULL DEFAULT '',
+  usage_text    TEXT        NOT NULL DEFAULT '',
+  stock         INTEGER     NOT NULL DEFAULT 0 CHECK (stock >= 0),
+  active        BOOLEAN     NOT NULL DEFAULT TRUE,
+  sort_order    INTEGER     NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-/** A document's data with its id attached, or null when it does not exist. */
-export const withId = snapshot =>
-  snapshot?.exists ? { id: snapshot.id, ...snapshot.data() } : null;
+CREATE INDEX IF NOT EXISTS idx_products_category ON products (category, active);
 
-export const docsOf = query => query.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+CREATE TABLE IF NOT EXISTS users (
+  id            INTEGER     GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  name          TEXT        NOT NULL,
+  email         TEXT        UNIQUE,
+  phone         TEXT        UNIQUE,
+  password_hash TEXT        NOT NULL,
+  role          TEXT        NOT NULL DEFAULT 'customer',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_login_at TIMESTAMPTZ
+);
 
-/**
- * Next value of a named counter. Sequential ids are needed where the API
- * contract promises a number (message ids) or where the catalogue uses fixed
- * numeric ids (products).
- */
-export async function nextId(name, startFrom = 1) {
-  const ref = counters().doc(name);
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash  TEXT        PRIMARY KEY,
+  user_id     INTEGER     NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at  TIMESTAMPTZ NOT NULL,
+  user_agent  TEXT        NOT NULL DEFAULT ''
+);
 
-  return transaction(async tx => {
-    const snapshot = await tx.get(ref);
-    const current = snapshot.exists ? Number(snapshot.data().value) || 0 : 0;
-    const next = Math.max(current + 1, startFrom);
-    tx.set(ref, { value: next }, { merge: true });
-    return next;
-  });
-}
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions (expires_at);
 
-/** Raises a counter's floor without ever lowering it. Used after seeding. */
-export async function ensureCounterAtLeast(name, value) {
-  const ref = counters().doc(name);
+CREATE TABLE IF NOT EXISTS carts (
+  user_id     INTEGER     NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  product_id  INTEGER     NOT NULL REFERENCES products (id) ON DELETE CASCADE,
+  qty         INTEGER     NOT NULL CHECK (qty > 0),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, product_id)
+);
 
-  await transaction(async tx => {
-    const snapshot = await tx.get(ref);
-    const current = snapshot.exists ? Number(snapshot.data().value) || 0 : 0;
-    if (value > current) tx.set(ref, { value }, { merge: true });
-  });
-}
+CREATE TABLE IF NOT EXISTS orders (
+  id              TEXT        PRIMARY KEY,
+  user_id         INTEGER     REFERENCES users (id) ON DELETE SET NULL,
+  customer_name   TEXT        NOT NULL,
+  email           TEXT        NOT NULL,
+  phone           TEXT        NOT NULL,
+  address         TEXT        NOT NULL,
+  notes           TEXT        NOT NULL DEFAULT '',
+  payment_method  TEXT        NOT NULL,
+  subtotal        INTEGER     NOT NULL,
+  shipping        INTEGER     NOT NULL DEFAULT 0,
+  cod_fee         INTEGER     NOT NULL DEFAULT 0,
+  total           INTEGER     NOT NULL,
+  status          TEXT        NOT NULL DEFAULT 'pending',
+  payment_status  TEXT        NOT NULL DEFAULT 'unpaid',
+  razorpay_order_id   TEXT,
+  razorpay_payment_id TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-/* ---------------------------------------------------------------- lifecycle */
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_phone ON orders (phone);
+CREATE INDEX IF NOT EXISTS idx_orders_rzp ON orders (razorpay_order_id);
 
-/**
- * Firestore is schemaless, so there is nothing to create — this only opens the
- * connection. Composite indexes live in firestore.indexes.json and are
- * deployed with the project.
- */
+CREATE TABLE IF NOT EXISTS order_items (
+  id          INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  order_id    TEXT    NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
+  product_id  INTEGER NOT NULL,
+  name        TEXT    NOT NULL,
+  size        TEXT    NOT NULL DEFAULT '',
+  image       TEXT    NOT NULL DEFAULT '',
+  unit_price  INTEGER NOT NULL,
+  qty         INTEGER NOT NULL,
+  line_total  INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items (order_id);
+
+CREATE TABLE IF NOT EXISTS newsletter (
+  email       TEXT        PRIMARY KEY,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  active      BOOLEAN     NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id          INTEGER     GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  name        TEXT        NOT NULL,
+  email       TEXT        NOT NULL,
+  phone       TEXT        NOT NULL DEFAULT '',
+  subject     TEXT        NOT NULL DEFAULT '',
+  message     TEXT        NOT NULL,
+  handled     BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+`;
+
 export async function initDb() {
   await connect();
-  return kind;
+  await exec(SCHEMA);
+  return driver.kind;
 }
 
 export async function cleanupExpiredSessions() {
-  const expired = await sessions().where('expiresAt', '<=', new Date()).limit(500).get();
-  if (expired.empty) return 0;
-
-  const batch = active().batch();
-  expired.docs.forEach(doc => batch.delete(doc.ref));
-  await batch.commit();
-
-  return expired.size;
+  const { rowCount } = await query('DELETE FROM sessions WHERE expires_at <= now()');
+  return rowCount ?? 0;
 }
 
-export async function closeDb() {
-  if (db) {
-    await db.terminate();
-    db = null;
-    kind = null;
-  }
-}
-
-/** Deletes every document. Test harness only — it refuses to run otherwise. */
+/** Drops every table. Used by the test harness only. */
 export async function dropAll() {
-  if (!config.firestoreEmulatorHost && config.env === 'production') {
-    throw new Error('dropAll() refuses to run against a production database.');
-  }
-
-  const root = active();
-  for (const name of [
-    'products',
-    'users',
-    'userEmails',
-    'userPhones',
-    'sessions',
-    'orders',
-    'newsletter',
-    'messages',
-    'counters'
-  ]) {
-    await root.recursiveDelete(root.collection(name));
-  }
+  await exec(`
+    DROP TABLE IF EXISTS order_items, orders, carts, sessions, users,
+                         products, newsletter, messages CASCADE
+  `);
 }

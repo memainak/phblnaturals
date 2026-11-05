@@ -1,5 +1,5 @@
-import { findSessionUser } from './accounts.js';
 import { config } from './config.js';
+import { one } from './db.js';
 import { HttpError, safeEqual, sha256 } from './util.js';
 
 export const SESSION_COOKIE = 'phbl_session';
@@ -89,22 +89,29 @@ export function parseCookies(req, _res, next) {
 
 /* ------------------------------------------------------------------- auth */
 
+const SESSION_SQL = `
+  SELECT s.token_hash, u.id, u.name, u.email, u.phone, u.role
+  FROM sessions s
+  JOIN users u ON u.id = s.user_id
+  WHERE s.token_hash = $1 AND s.expires_at > now()
+`;
+
 /** Populates req.user when a valid session cookie is present. Never rejects. */
 export async function attachUser(req, _res, next) {
   const token = req.cookies?.[SESSION_COOKIE];
   if (!token) return next();
 
   try {
-    const found = await findSessionUser(sha256(token));
-    if (found) {
+    const row = await one(SESSION_SQL, [sha256(token)]);
+    if (row) {
       req.user = {
-        id: found.user.id,
-        name: found.user.name,
-        email: found.user.email,
-        phone: found.user.phone,
-        role: found.user.role
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        role: row.role
       };
-      req.sessionTokenHash = found.tokenHash;
+      req.sessionTokenHash = row.token_hash;
     }
   } catch (error) {
     return next(error);

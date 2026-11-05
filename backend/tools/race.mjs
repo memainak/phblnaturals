@@ -1,10 +1,20 @@
 /**
- * Concurrency check for the Firestore stock reservation: the one piece whose
- * mechanism changed completely in the port. Sets a product to exactly 1 unit,
- * fires N simultaneous checkouts for it, and asserts that exactly one wins.
+ * Concurrency check for the stock reservation. Sets a product to exactly one
+ * unit, fires N simultaneous checkouts at it, and asserts that exactly one
+ * wins, none fails for any other reason, and stock lands on zero.
+ *
+ *   npm run race
+ *   RACE_DATABASE_URL="postgres://..." npm run race   # against real Postgres
+ *
+ * The guarantee under test is the `stock >= $1` predicate in reserveStock():
+ * the check and the decrement are one statement, so the row lock decides the
+ * winner. Worth re-running against Supabase before taking real orders, since
+ * PGlite runs a single connection and cannot truly contend.
  */
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,14 +23,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 4988;
 const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN_KEY = 'race-admin-key';
-const EMULATOR = '127.0.0.1:8080';
-const PROJECT = 'phbl-naturals-local';
 const ATTEMPTS = 8;
 
-await fetch(
-  `http://${EMULATOR}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`,
-  { method: 'DELETE' }
-);
+// A throwaway database per run, so a developer's own data is never touched.
+// RACE_DATABASE_URL points the run at real Postgres instead, which is worth
+// doing before launch: PGlite is one process, so it cannot reproduce two
+// separate connections contending for the same row.
+const SCRATCH = fs.mkdtempSync(path.join(os.tmpdir(), 'phbl-race-'));
+const RACE_DATABASE_URL = process.env.RACE_DATABASE_URL || '';
 
 const child = spawn(process.execPath, ['server.js'], {
   cwd: ROOT,
@@ -32,9 +42,9 @@ const child = spawn(process.execPath, ['server.js'], {
     SESSION_SECRET: 'race-session-secret',
     RAZORPAY_KEY_ID: '',
     RAZORPAY_KEY_SECRET: '',
-    FIRESTORE_EMULATOR_HOST: EMULATOR,
-    FIREBASE_PROJECT_ID: PROJECT,
-    GOOGLE_APPLICATION_CREDENTIALS: ''
+    DATABASE_URL: RACE_DATABASE_URL,
+    POSTGRES_URL: '',
+    PHBL_DATA_DIR: SCRATCH
   },
   stdio: ['ignore', 'pipe', 'pipe']
 });
@@ -109,4 +119,9 @@ try {
   process.exitCode = 1;
 } finally {
   child.kill('SIGKILL');
+  try {
+    fs.rmSync(SCRATCH, { recursive: true, force: true });
+  } catch {
+    /* the scratch directory is already gone */
+  }
 }

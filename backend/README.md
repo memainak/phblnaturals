@@ -4,27 +4,14 @@ The storefront API behind `frontend/phbl_naturals_website`: catalogue, customer
 accounts, cart, orders, Razorpay payments, newsletter, contact messages and an
 admin dashboard.
 
-Node 22. Data lives in **Firestore**, reached through the Firebase Admin SDK;
-passwords and session tokens use the built-in `node:crypto`. The same Express
-app runs two ways: `node server.js` locally, and as a single Cloud Function
-(`functions.js`) in production.
+Node 22. Data lives in **Postgres** — Supabase in production, PGlite locally.
+The same Express app runs two ways: `node server.js` for development, and as a
+single Cloud Function (`functions.js`) in production.
 
 ## Run it
 
-The Firestore emulator needs a Java runtime. OpenJDK is installed but keg-only,
-so add it to your `PATH` once:
-
-```bash
-printf '\nexport PATH="/opt/homebrew/opt/openjdk/bin:$PATH"\n' >> ~/.zshrc
-```
-
-Then start the emulator in one terminal:
-
-```bash
-npm run emulator
-```
-
-Then the server in another:
+No database server and no Docker: with `DATABASE_URL` unset the server uses
+PGlite, which is real Postgres compiled to WASM, stored in `data/pg`.
 
 ```bash
 cd backend
@@ -38,12 +25,12 @@ npm run dev
 - Admin — http://localhost:4000/admin.html (paste your `ADMIN_KEY`)
 
 The catalogue is seeded automatically on first boot from `src/catalogue.js`.
-`.env.example` also documents running against the real Firestore with a
-service-account key, but the emulator is the safer default: the live database
-holds real orders.
+Local settings go in `.env.local`, not `.env` — this folder is the Cloud
+Functions source directory, and Firebase treats a `.env` here as the deployed
+production environment.
 
 ```bash
-npm run smoke   # 68 end-to-end checks against the emulator
+npm run smoke   # 68 end-to-end checks against a scratch database
 ```
 
 ```bash
@@ -175,7 +162,7 @@ Payment: `unpaid → paid`, or `failed` / `refunded`.
 4. Add live Razorpay keys and register the webhook URL.
 5. Check `FREE_SHIPPING_OVER`, `SHIPPING_FLAT` and `COD_FEE` against real
    shipping costs.
-6. Turn on Firestore backups (console > Firestore > Backups) — the database holds every order and customer.
+6. Turn on Supabase Point-in-Time Recovery or daily backups — the database holds every order and customer.
 7. Wire up transactional email (order confirmations are stored, not emailed) and
    decide on Google / OTP sign-in if you want the buttons on the page to work.
 
@@ -187,8 +174,7 @@ backend/
   functions.js            Cloud Functions entry (same app, API only)
   src/
     config.js             env, defaults, production guards
-    db.js                 Firestore connection, collections, transactions
-    accounts.js           users, sessions, email/phone uniqueness claims
+    db.js                 Postgres schema, pooling and transactions
     catalogue.js          seed product data
     seed.js               idempotent seeding (keeps admin stock edits)
     util.js               validation, scrypt passwords, ids

@@ -1,125 +1,80 @@
 import { config } from './config.js';
-import { cartOf, products, serverTimestamp } from './db.js';
+import { all, one, query } from './db.js';
 import { HttpError, bad, posInt } from './util.js';
 
 /* --------------------------------------------------------------- products */
 
-/**
- * Product documents already use the field names the API returns, so shaping is
- * only about derived values and defaults.
- */
+const PRODUCT_COLUMNS = `
+  id, slug, name, category, price, old_price AS "oldPrice", badge, size, image,
+  description AS "desc", ingredients, benefits, usage_text AS usage, stock,
+  active, sort_order AS "sortOrder"
+`;
+
 const shape = row =>
   row && {
-    id: Number(row.id),
-    slug: row.slug,
-    name: row.name,
-    category: row.category,
-    price: row.price,
-    oldPrice: row.oldPrice ?? null,
-    badge: row.badge ?? '',
-    size: row.size ?? '',
-    image: row.image ?? '',
-    desc: row.desc ?? '',
-    ingredients: row.ingredients ?? '',
-    benefits: row.benefits ?? '',
-    usage: row.usage ?? '',
-    stock: row.stock ?? 0,
+    ...row,
     active: Boolean(row.active),
-    sortOrder: row.sortOrder ?? 0,
-    inStock: (row.stock ?? 0) > 0
+    inStock: row.stock > 0,
+    oldPrice: row.oldPrice ?? null
   };
 
-const bySortOrder = (a, b) => a.sortOrder - b.sortOrder || a.id - b.id;
-
-/**
- * Reads the whole catalogue and sorts in memory. The storefront already
- * filters and sorts client-side over the full list, and the catalogue is tens
- * of products, so one collection read per request is cheaper than maintaining
- * composite indexes for every filter combination. Revisit if the catalogue
- * ever runs to thousands of items.
- */
 export async function listProducts({ includeInactive = false } = {}) {
-  const snapshot = await products().get();
-
-  return snapshot.docs
-    .map(doc => shape({ id: doc.id, ...doc.data() }))
-    .filter(product => includeInactive || product.active)
-    .sort(bySortOrder);
+  const rows = await all(
+    `SELECT ${PRODUCT_COLUMNS} FROM products
+     ${includeInactive ? '' : 'WHERE active = TRUE'}
+     ORDER BY sort_order, id`
+  );
+  return rows.map(shape);
 }
 
-export async function getProduct(id) {
-  const key = String(id ?? '').trim();
-  if (!key) return null;
+export const getProduct = async id =>
+  shape(await one(`SELECT ${PRODUCT_COLUMNS} FROM products WHERE id = $1`, [id]));
 
-  const snapshot = await products().doc(key).get();
-  return snapshot.exists ? shape({ id: snapshot.id, ...snapshot.data() }) : null;
-}
+export const getProductBySlug = async slug =>
+  shape(await one(`SELECT ${PRODUCT_COLUMNS} FROM products WHERE slug = $1`, [slug]));
 
-export async function getProductBySlug(slug) {
-  const snapshot = await products()
-    .where('slug', '==', String(slug ?? '').trim())
-    .limit(1)
-    .get();
-
-  return snapshot.empty ? null : shape({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
-}
-
-export async function listCategories() {
-  const counts = new Map();
-
-  for (const product of await listProducts()) {
-    counts.set(product.category, (counts.get(product.category) || 0) + 1);
-  }
-
-  return [...counts]
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
+export const listCategories = () =>
+  all(
+    `SELECT category AS name, COUNT(*)::int AS count
+     FROM products WHERE active = TRUE
+     GROUP BY category ORDER BY category`
+  );
 
 /* ------------------------------------------------------------------- cart */
 
-export async function getCartRows(userId) {
-  const snapshot = await cartOf(userId).get();
-
-  return snapshot.docs
-    .map(doc => ({
-      productId: Number(doc.id),
-      qty: doc.data().qty,
-      updatedAt: doc.data().updatedAt
-    }))
-    .sort((a, b) => a.productId - b.productId)
-    .map(({ productId, qty }) => ({ productId, qty }));
-}
+export const getCartRows = userId =>
+  all(
+    `SELECT product_id AS "productId", qty FROM carts
+     WHERE user_id = $1 ORDER BY updated_at, product_id`,
+    [userId]
+  );
 
 export async function setCartItem(userId, productId, qty) {
   const product = await getProduct(productId);
   if (!product || !product.active) throw bad(`Product ${productId} is not available.`);
 
-  const ref = cartOf(userId).doc(String(productId));
-
   if (qty <= 0) {
-    await ref.delete();
+    await query('DELETE FROM carts WHERE user_id = $1 AND product_id = $2', [userId, productId]);
     return;
   }
 
-  await ref.set({ qty: Math.min(qty, 99), updatedAt: serverTimestamp() });
+  await query(
+    `INSERT INTO carts (user_id, product_id, qty, updated_at)
+     VALUES ($1, $2, $3, now())
+     ON CONFLICT (user_id, product_id)
+     DO UPDATE SET qty = EXCLUDED.qty, updated_at = now()`,
+    [userId, productId, Math.min(qty, 99)]
+  );
 }
 
 export async function replaceCart(userId, items) {
-  await clearCart(userId);
+  await query('DELETE FROM carts WHERE user_id = $1', [userId]);
   for (const { productId, qty } of items) {
     if (qty > 0) await setCartItem(userId, productId, qty);
   }
 }
 
-export async function clearCart(userId) {
-  const snapshot = await cartOf(userId).get();
-  if (snapshot.empty) return;
-
-  const batch = cartOf(userId).firestore.batch();
-  snapshot.docs.forEach(doc => batch.delete(doc.ref));
-  await batch.commit();
-}
+export const clearCart = userId => query('DELETE FROM carts WHERE user_id = $1', [userId]);
 
 /* ---------------------------------------------------------------- pricing */
 
@@ -223,64 +178,28 @@ export const isOnlineMethod = method => method !== 'cod';
 /* ------------------------------------------------------------------ stock */
 
 /**
- * Decrements stock for each line inside a Firestore transaction.
- *
- * A Firestore transaction must do all of its reads before any of its writes,
- * so every product is fetched in one getAll() and only then written. If any
- * other client changes one of those documents before the commit, Firestore
- * aborts and re-runs the whole transaction, which is what makes the
- * check-then-decrement safe: two shoppers cannot both take the last unit.
- *
- * Because the transaction body can run more than once, it must stay free of
- * side effects outside Firestore.
+ * Decrements stock for each line. The `stock >= $1` guard makes the check and
+ * the write one atomic statement, so two shoppers cannot take the last unit.
+ * `client` is the transaction handle from transaction().
  */
-export async function reserveStock(tx, items) {
-  const refs = items.map(item => products().doc(String(item.productId)));
-  const snapshots = await tx.getAll(...refs);
-
-  const writes = [];
-
-  for (const [index, item] of items.entries()) {
-    const snapshot = snapshots[index];
-
-    if (!snapshot.exists) {
-      throw new HttpError(409, `${item.name} is no longer in the catalogue.`);
-    }
-
-    const data = snapshot.data();
-    const stock = data.stock ?? 0;
-
-    if (!data.active) {
-      throw new HttpError(409, `${item.name} is no longer available.`);
-    }
-    if (stock < item.qty) {
+export async function reserveStock(client, items) {
+  for (const item of items) {
+    const { rowCount } = await client.query(
+      `UPDATE products SET stock = stock - $1, updated_at = now()
+       WHERE id = $2 AND stock >= $1`,
+      [item.qty, item.productId]
+    );
+    if (!rowCount) {
       throw new HttpError(409, `${item.name} just went out of stock. Please adjust your cart.`);
     }
-
-    writes.push([snapshot.ref, stock - item.qty]);
-  }
-
-  for (const [ref, stock] of writes) {
-    tx.update(ref, { stock, updatedAt: serverTimestamp() });
   }
 }
 
-/** Returns reserved stock to the catalogue. Reads first, then writes. */
-export async function releaseStock(tx, items) {
-  if (!items.length) return;
-
-  const refs = items.map(item => products().doc(String(item.productId)));
-  const snapshots = await tx.getAll(...refs);
-
-  const writes = [];
-
-  for (const [index, item] of items.entries()) {
-    const snapshot = snapshots[index];
-    if (!snapshot.exists) continue;
-    writes.push([snapshot.ref, (snapshot.data().stock ?? 0) + item.qty]);
-  }
-
-  for (const [ref, stock] of writes) {
-    tx.update(ref, { stock, updatedAt: serverTimestamp() });
+export async function releaseStock(client, items) {
+  for (const item of items) {
+    await client.query(
+      'UPDATE products SET stock = stock + $1, updated_at = now() WHERE id = $2',
+      [item.qty, item.productId]
+    );
   }
 }
