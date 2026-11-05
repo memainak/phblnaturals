@@ -11,8 +11,14 @@ app runs two ways: `node server.js` locally, and as a single Cloud Function
 
 ## Run it
 
-The Firestore emulator needs a Java runtime (`brew install openjdk`). Start it
-in one terminal:
+The Firestore emulator needs a Java runtime. OpenJDK is installed but keg-only,
+so add it to your `PATH` once:
+
+```bash
+printf '\nexport PATH="/opt/homebrew/opt/openjdk/bin:$PATH"\n' >> ~/.zshrc
+```
+
+Then start the emulator in one terminal:
 
 ```bash
 npm run emulator
@@ -38,6 +44,10 @@ holds real orders.
 
 ```bash
 npm run smoke   # 68 end-to-end checks against the emulator
+```
+
+```bash
+npm run race    # 8 simultaneous checkouts for one unit of stock
 ```
 
 ## How the frontend is wired up
@@ -189,5 +199,7 @@ backend/
   public/
     storefront-api.js     frontend ↔ API bridge, injected into index.html
     admin.html            admin dashboard
-  tools/smoke.mjs         end-to-end tests
+  tools/
+    smoke.mjs             end-to-end tests (68 checks)
+    race.mjs              concurrent stock-reservation check
 ```

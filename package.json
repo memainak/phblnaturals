@@ -8,6 +8,7 @@
     "build": "node scripts/build-static.mjs",
     "dev": "npm --prefix backend run dev",
     "smoke": "npm --prefix backend run smoke",
+    "race": "npm --prefix backend run race",
     "emulator": "firebase emulators:start --only firestore --project phbl-naturals-local",
     "deploy": "npm run build && firebase deploy",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",

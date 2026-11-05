@@ -143,24 +143,24 @@ HTTPS; Firebase issues the certificate automatically.
 
 ## Running it locally
 
-The Firestore emulator needs a Java runtime, which this machine does not have
-yet:
+The Firestore emulator needs a Java runtime. OpenJDK is already installed on
+this machine; it is keg-only, so it is not on the `PATH` by default. Put it
+there permanently:
 
 ```bash
-brew install openjdk
+printf '\nexport PATH="/opt/homebrew/opt/openjdk/bin:$PATH"\n' >> ~/.zshrc
 ```
+
+Open a new terminal after that, or prefix the one command that needs it:
 
 ```bash
-sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+PATH="/opt/homebrew/opt/openjdk/bin:$PATH" npm run emulator
 ```
 
-Then, in one terminal:
+The `sudo ln -s` line Homebrew suggests is for the system Java wrappers and is
+not needed here.
 
-```bash
-npm run emulator
-```
-
-And in another:
+With the emulator running in one terminal, start the server in another:
 
 ```bash
 cd backend && npm install && npm run dev
@@ -170,7 +170,11 @@ cd backend && npm install && npm run dev
 npm run smoke   # 68 end-to-end checks, against the emulator
 ```
 
-The suite wipes the emulator before each run and never touches the real
+```bash
+npm run race    # 8 simultaneous checkouts for one unit of stock
+```
+
+Both suites wipe the emulator before they start and never touch the real
 database. `backend/.env.example` documents the alternative — pointing the
 server at the live Firestore with a service-account key — but prefer the
 emulator, since the live database holds real orders.
@@ -186,7 +190,8 @@ Worth knowing, because it is not a like-for-like swap:
 - **Stock reservation** is now a Firestore transaction that reads every
   product, checks each one, then writes. If another shopper touches the same
   product first, Firestore aborts and re-runs it, so the last unit still cannot
-  be sold twice.
+  be sold twice. `npm run race` proves this: 8 simultaneous checkouts for a
+  single unit produce one order and seven clean "out of stock" rejections.
 - **Order line items** live in an `items` array on the order document rather
   than a separate table, so reading an order is one document read.
 - **Unique emails and mobile numbers** are enforced by claim documents in

@@ -10,6 +10,7 @@
     "dev": "node --watch server.js",
     "seed": "node src/seed.js",
     "smoke": "node tools/smoke.mjs",
+    "race": "node tools/race.mjs",
     "emulator": "firebase emulators:start --only firestore --project phbl-naturals-local"
   },
   "engines": {
