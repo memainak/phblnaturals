@@ -1,0 +1,20 @@
+{%- comment -%} Consumer Protection (E-Commerce) Rules, 2020: Grievance Officer details from Theme settings. {%- endcomment -%}
+<div class="phbl-section page-width" style="max-width:80rem">
+  <h2 class="h3">{{ 'phbl.grievance.heading' | t }}</h2>
+  <dl class="phbl-legal">
+    <dt>{{ 'phbl.grievance.name' | t }}</dt><dd>{{ settings.grievance_name | default: '—' }}</dd>
+    <dt>{{ 'phbl.grievance.email' | t }}</dt><dd>{% if settings.grievance_email != blank %}<a href="mailto:{{ settings.grievance_email }}">{{ settings.grievance_email }}</a>{% else %}—{% endif %}</dd>
+    <dt>{{ 'phbl.grievance.phone' | t }}</dt><dd>{{ settings.grievance_phone | default: '—' }}</dd>
+    <dt>{{ 'phbl.grievance.address' | t }}</dt><dd>{{ settings.company_address | newline_to_br | default: '—' }}</dd>
+    {%- if settings.gstin != blank -%}<dt>GSTIN</dt><dd>{{ settings.gstin }}</dd>{%- endif -%}
+  </dl>
+  <div class="rte">{{ section.settings.text }}</div>
+</div>
+{% schema %}
+{
+  "name": "PHBL Grievance officer",
+  "tag": "section",
+  "settings": [{ "type": "richtext", "id": "text", "label": "Process text", "default": "<p>We acknowledge complaints within 48 hours and resolve them within one month of receipt.</p>" }],
+  "presets": [{ "name": "PHBL Grievance officer" }]
+}
+{% endschema %}

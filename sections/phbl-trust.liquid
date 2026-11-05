@@ -1,0 +1,43 @@
+{%- comment -%} Brand promise icons. Uses blocks if added, otherwise Theme settings > PHBL: Trust badges. List only TRUE claims. {%- endcomment -%}
+<div class="phbl-section" style="background: {{ section.settings.bg }}">
+  <div class="page-width">
+    {%- if section.settings.heading != blank -%}<div class="phbl-heading" style="justify-content:center"><h2 class="h3">{{ section.settings.heading }}</h2></div>{%- endif -%}
+    <div class="phbl-icons" style="--cols-desktop: 4">
+      {%- if section.blocks.size > 0 -%}
+        {%- for block in section.blocks -%}
+          <div class="phbl-icon" {{ block.shopify_attributes }}>
+            {%- if block.settings.icon -%}{{ block.settings.icon | image_url: width: 112 | image_tag: loading: 'lazy', alt: '' }}{%- endif -%}
+            <span>{{ block.settings.text }}</span>
+          </div>
+        {%- endfor -%}
+      {%- else -%}
+        {%- for i in (1..4) -%}
+          {%- assign tk = 'trust_' | append: i | append: '_text' -%}
+          {%- assign ik = 'trust_' | append: i | append: '_icon' -%}
+          {%- if settings[tk] != blank -%}
+            <div class="phbl-icon">
+              {%- if settings[ik] -%}{{ settings[ik] | image_url: width: 112 | image_tag: loading: 'lazy', alt: '' }}{%- endif -%}
+              <span>{{ settings[tk] }}</span>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "PHBL Brand promise",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "The PHBL Promise" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#DDE8D5" },
+    { "type": "paragraph", "content": "No blocks = uses Theme settings > PHBL: Trust badges." }
+  ],
+  "blocks": [
+    { "type": "badge", "name": "Badge", "settings": [{ "type": "image_picker", "id": "icon", "label": "Icon" }, { "type": "text", "id": "text", "label": "Text" }] }
+  ],
+  "max_blocks": 8,
+  "presets": [{ "name": "PHBL Brand promise" }]
+}
+{% endschema %}

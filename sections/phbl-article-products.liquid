@@ -1,0 +1,19 @@
+{%- comment -%} Product cards inside blog articles, from article metafield custom.products (list of product refs). {%- endcomment -%}
+{%- assign items = article.metafields.custom.products.value -%}
+{%- if items != blank -%}
+  <div class="phbl-section page-width" style="max-width:100rem">
+    <div class="phbl-heading"><h2 class="h4">{{ section.settings.heading }}</h2></div>
+    <div class="phbl-scroller">
+      {%- for p in items -%}{%- render 'phbl-card', product: p -%}{%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Article products",
+  "tag": "section",
+  "enabled_on": { "templates": ["article"] },
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "Products in this article" }],
+  "presets": [{ "name": "PHBL Article products" }]
+}
+{% endschema %}

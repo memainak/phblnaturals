@@ -1,0 +1,33 @@
+{%- comment -%} testimonial metaobject: name, photo, title, quote, product (product ref) {%- endcomment -%}
+{%- assign entries = shop.metaobjects.testimonial.values -%}
+{%- if entries.size > 0 -%}
+  <div class="phbl-section page-width">
+    <div class="phbl-heading"><h2 class="h3">{{ section.settings.heading }}</h2></div>
+    <div class="phbl-scroller" style="grid-auto-columns: minmax(26rem, 1fr)">
+      {%- for t in entries limit: section.settings.limit -%}
+        {%- assign p = t.product.value -%}
+        <figure class="phbl-quote" style="margin:0">
+          <div class="phbl-quote__who">
+            {%- if t.photo != blank -%}{{ t.photo.value | image_url: width: 96 | image_tag: loading: 'lazy', alt: t.name.value }}{%- endif -%}
+            <figcaption><strong>{{ t.name.value }}</strong>{%- if t.title != blank -%}<br><span class="phbl-muted">{{ t.title.value }}</span>{%- endif -%}</figcaption>
+          </div>
+          <blockquote>“{{ t.quote.value }}”</blockquote>
+          {%- if p != blank -%}
+            <a href="{{ p.url }}" class="phbl-muted" style="margin-top:auto">{{ 'phbl.testimonials.recommends' | t }} <strong>{{ p.title }}</strong> →</a>
+          {%- endif -%}
+        </figure>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Testimonials",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Loved by our customers" },
+    { "type": "range", "id": "limit", "label": "Max testimonials", "min": 2, "max": 20, "step": 1, "default": 10 }
+  ],
+  "presets": [{ "name": "PHBL Testimonials" }]
+}
+{% endschema %}

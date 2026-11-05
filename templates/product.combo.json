@@ -1,0 +1,172 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "title": {
+          "type": "title"
+        },
+        "price": {
+          "type": "price"
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button",
+            "swatch_shape": "circle"
+          }
+        },
+        "quantity_selector": {
+          "type": "quantity_selector"
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": false,
+            "show_gift_card_recipient": true
+          }
+        },
+        "share": {
+          "type": "share",
+          "settings": {
+            "share_label": "Share"
+          }
+        },
+        "phbl_tagline": {
+          "type": "phbl_tagline",
+          "settings": {}
+        },
+        "phbl_price_note": {
+          "type": "phbl_price_note",
+          "settings": {}
+        },
+        "phbl_offers": {
+          "type": "phbl_offers",
+          "settings": {}
+        },
+        "phbl_pincode": {
+          "type": "phbl_pincode",
+          "settings": {}
+        },
+        "phbl_buy_now": {
+          "type": "phbl_buy_now",
+          "settings": {}
+        },
+        "phbl_benefits": {
+          "type": "phbl_benefits",
+          "settings": {}
+        },
+        "phbl_accordions": {
+          "type": "phbl_accordions",
+          "settings": {}
+        },
+        "rating": {
+          "type": "rating",
+          "settings": {}
+        },
+        "combo_note": {
+          "type": "text",
+          "settings": {
+            "text": "Save more when you buy together. Each item in this combo ships in its original pack.",
+            "text_style": "body"
+          }
+        },
+        "phbl_specs": {
+          "type": "phbl_specs",
+          "settings": {}
+        },
+        "phbl_features": {
+          "type": "phbl_features",
+          "settings": {}
+        },
+        "phbl_social_proof": {
+          "type": "phbl_social_proof",
+          "settings": {}
+        },
+        "phbl_offer_tiers": {
+          "type": "phbl_offer_tiers",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "phbl_specs",
+        "title",
+        "rating",
+        "phbl_tagline",
+        "phbl_features",
+        "price",
+        "phbl_price_note",
+        "phbl_social_proof",
+        "variant_picker",
+        "quantity_selector",
+        "buy_buttons",
+        "phbl_buy_now",
+        "combo_note",
+        "phbl_offer_tiers",
+        "phbl_offers",
+        "phbl_pincode",
+        "phbl_benefits",
+        "phbl_accordions",
+        "share"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "color_scheme": "scheme-1",
+        "media_position": "left",
+        "gallery_layout": "thumbnail_slider",
+        "media_size": "large",
+        "constrain_to_viewport": true,
+        "media_fit": "cover",
+        "image_zoom": "lightbox",
+        "mobile_thumbnails": "hide",
+        "hide_variants": true,
+        "enable_video_looping": false,
+        "padding_top": 36,
+        "padding_bottom": 12
+      }
+    },
+    "related-products": {
+      "type": "related-products",
+      "settings": {
+        "heading": "You may also like",
+        "heading_size": "h2",
+        "products_to_show": 4,
+        "columns_desktop": 4,
+        "color_scheme": "scheme-1",
+        "image_ratio": "square",
+        "image_shape": "default",
+        "show_secondary_image": true,
+        "show_vendor": false,
+        "show_rating": false,
+        "columns_mobile": "2",
+        "padding_top": 36,
+        "padding_bottom": 28
+      }
+    },
+    "reviews": {
+      "type": "apps",
+      "settings": {
+        "include_margins": true
+      }
+    },
+    "recently": {
+      "type": "phbl-recently-viewed",
+      "settings": {
+        "heading": "Recently viewed"
+      }
+    },
+    "combo_items": {
+      "type": "phbl-combo-items",
+      "settings": {
+        "heading": "What's inside this combo"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "combo_items",
+    "reviews",
+    "related-products",
+    "recently"
+  ]
+}

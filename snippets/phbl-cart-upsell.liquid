@@ -1,0 +1,40 @@
+{%- comment -%}
+  Cart upsell. Source order:
+  1. custom.frequently_bought_together of cart items (Liquid, instant)
+  2. Theme setting cart_upsell_collection
+  JS then upgrades the list with Search & Discovery complementary recommendations for the first item.
+{%- endcomment -%}
+{%- if settings.cart_upsell_enable and cart != empty -%}
+  {%- liquid
+    assign in_cart = cart.items | map: 'product_id' | join: ','
+    assign in_cart = ',' | append: in_cart | append: ','
+    assign shown = ','
+    assign count = 0
+  -%}
+  {%- capture cards -%}
+    {%- for item in cart.items -%}
+      {%- for up in item.product.metafields.custom.frequently_bought_together.value -%}
+        {%- assign key = ',' | append: up.id | append: ',' -%}
+        {%- unless count >= 6 or up.available == false or in_cart contains key or shown contains key -%}
+          {%- render 'phbl-mini-card', product: up -%}
+          {%- assign shown = shown | append: up.id | append: ',' -%}
+          {%- assign count = count | plus: 1 -%}
+        {%- endunless -%}
+      {%- endfor -%}
+    {%- endfor -%}
+    {%- if count < 3 and settings.cart_upsell_collection != blank -%}
+      {%- for up in settings.cart_upsell_collection.products limit: 12 -%}
+        {%- assign key = ',' | append: up.id | append: ',' -%}
+        {%- unless count >= 6 or up.available == false or in_cart contains key or shown contains key -%}
+          {%- render 'phbl-mini-card', product: up -%}
+          {%- assign shown = shown | append: up.id | append: ',' -%}
+          {%- assign count = count | plus: 1 -%}
+        {%- endunless -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endcapture -%}
+  <div class="phbl-upsell" style="padding-inline: 1.6rem" data-upsell-for="{{ cart.items.first.product_id }}" data-exclude="{{ in_cart }}" {% if count == 0 %}hidden{% endif %}>
+    <h3 class="h5">{{ 'phbl.cart.upsell_heading' | t }}</h3>
+    <div class="phbl-scroller" data-upsell-list>{{ cards }}</div>
+  </div>
+{%- endif -%}

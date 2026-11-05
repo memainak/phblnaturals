@@ -1,0 +1,54 @@
+{%- comment -%} Rotating offer bar. Each block = one message, optional click-to-copy code. CSS-only rotation (no JS). {%- endcomment -%}
+{%- assign n = section.blocks.size -%}
+{%- if n > 0 -%}
+  {%- style -%}
+    #shopify-section-{{ section.id }} .phbl-ann { background: {{ section.settings.bg }}; color: {{ section.settings.fg }}; font-size: 1.3rem; overflow: hidden; height: 3.6rem; position: relative; }
+    #shopify-section-{{ section.id }} .phbl-ann__item { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .8rem; padding: 0 1.6rem; text-align: center; }
+    #shopify-section-{{ section.id }} .phbl-ann__item a { color: inherit; }
+    {%- if n > 1 -%}
+      #shopify-section-{{ section.id }} .phbl-ann__item { opacity: 0; animation: phbl-ann-{{ section.id }} {{ n | times: section.settings.speed }}s infinite; }
+      {%- for block in section.blocks -%}
+        #shopify-section-{{ section.id }} .phbl-ann__item:nth-child({{ forloop.index }}) { animation-delay: {{ forloop.index0 | times: section.settings.speed }}s; }
+      {%- endfor -%}
+      {%- assign slot = 100.0 | divided_by: n -%}
+      @keyframes phbl-ann-{{ section.id }} { 0% { opacity: 0; transform: translateY(40%); } 3% { opacity: 1; transform: none; } {{ slot | minus: 3 }}% { opacity: 1; transform: none; } {{ slot }}% { opacity: 0; transform: translateY(-40%); } 100% { opacity: 0; } }
+      #shopify-section-{{ section.id }} .phbl-ann:hover .phbl-ann__item { animation-play-state: paused; }
+      @media (prefers-reduced-motion: reduce) { #shopify-section-{{ section.id }} .phbl-ann__item { animation: none; } #shopify-section-{{ section.id }} .phbl-ann__item:first-child { opacity: 1; } }
+    {%- endif -%}
+  {%- endstyle -%}
+  <div class="phbl-ann" role="region" aria-label="{{ 'sections.header.announcement' | t }}">
+    {%- for block in section.blocks -%}
+      <p class="phbl-ann__item" {{ block.shopify_attributes }} style="margin:0">
+        {%- if block.settings.link != blank -%}<a href="{{ block.settings.link }}">{{ block.settings.text }}</a>{%- else -%}<span>{{ block.settings.text }}</span>{%- endif -%}
+        {%- if block.settings.code != blank -%}
+          <button type="button" class="phbl-code" data-code="{{ block.settings.code | escape }}" aria-label="{{ 'phbl.general.copy_code' | t: code: block.settings.code }}">{{ block.settings.code }}</button>
+        {%- endif -%}
+      </p>
+    {%- endfor -%}
+  </div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Announcement bar",
+  "tag": "div",
+  "enabled_on": { "groups": ["header"] },
+  "settings": [
+    { "type": "color", "id": "bg", "label": "Background", "default": "#2F5D3A" },
+    { "type": "color", "id": "fg", "label": "Text", "default": "#FFFFFF" },
+    { "type": "range", "id": "speed", "label": "Seconds per message", "min": 3, "max": 10, "step": 1, "default": 4 }
+  ],
+  "blocks": [
+    {
+      "type": "message",
+      "name": "Message",
+      "settings": [
+        { "type": "text", "id": "text", "label": "Text", "default": "Free gift on orders above ₹999" },
+        { "type": "text", "id": "code", "label": "Discount code (click to copy)" },
+        { "type": "url", "id": "link", "label": "Link" }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [{ "name": "PHBL Announcement bar", "blocks": [{ "type": "message" }] }]
+}
+{% endschema %}

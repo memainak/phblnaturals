@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop all products | PHBL Naturals</title>
+<meta name="description" content="Shop natural face, hair, body and lip care from PHBL Naturals. Filter by category, skin concern, ingredient and price. Free delivery above ₹499.">
+<link rel="canonical" href="https://phblnaturals.com/shop.html">
+<meta name="theme-color" content="#2F5D3A">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css?v=1.0.9">
+</head>
+<body>
+<a class="sr-only" href="#main">Skip to content</a>
+<div id="announce" class="announce" aria-label="Offers"></div>
+<header class="header" id="site-header"></header>
+
+<main id="main">
+  <div class="wrap">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> / <span>Shop</span></nav>
+    <h1 id="shop-title">All products</h1>
+    <div class="shop section" style="padding-top:16px">
+      <div class="filters-panel" id="filters-panel">
+        <div class="filters" id="filters"></div>
+        <button class="btn btn--block" type="button" id="filters-done" style="margin-top:16px">Show results</button>
+      </div>
+      <div>
+        <div class="shop__bar">
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn--ghost btn--sm filter-toggle" type="button" id="filter-toggle">Filters</button>
+            <span class="muted" id="result-count"></span>
+          </div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:14px">
+            <span class="muted">Sort</span>
+            <select id="sort" style="min-height:38px;width:auto">
+              <option value="featured">Featured</option>
+              <option value="newest">Newest</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="rating">Rating</option>
+              <option value="title">A–Z</option>
+            </select>
+          </label>
+        </div>
+        <div class="active-filters" id="active-filters"></div>
+        <div class="grid" style="--cols-m:2;--cols-d:4" id="product-grid"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="assets/js/app.js?v=1.0.9"></script>
+<script src="assets/js/shop.js?v=1.0.9"></script>
+</body>
+</html>

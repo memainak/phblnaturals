@@ -1,0 +1,47 @@
+{%- comment -%} Frequently bought together from custom.frequently_bought_together (product list). Add-all with combined price. {%- endcomment -%}
+{%- assign items = product.metafields.custom.frequently_bought_together.value -%}
+{%- if items != blank and product.available -%}
+  {%- liquid
+    assign main_v = product.selected_or_first_available_variant
+    assign total = main_v.price
+    assign mrp_total = main_v.compare_at_price | default: main_v.price
+    assign ids = main_v.id
+    assign n = 1
+  -%}
+  <div class="phbl-section page-width">
+    <div class="phbl-heading"><h2 class="h3">{{ section.settings.heading }}</h2></div>
+    <div class="phbl-scroller">
+      {%- render 'phbl-card', product: product -%}
+      {%- for p in items limit: 3 -%}
+        {%- if p.available -%}
+          {%- assign pv = p.selected_or_first_available_variant -%}
+          {%- assign total = total | plus: pv.price -%}
+          {%- assign pm = pv.compare_at_price | default: pv.price -%}
+          {%- assign mrp_total = mrp_total | plus: pm -%}
+          {%- assign ids = ids | append: ',' | append: pv.id -%}
+          {%- assign n = n | plus: 1 -%}
+          {%- render 'phbl-card', product: p -%}
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+    {%- if n > 1 -%}
+      <div style="display:flex;flex-wrap:wrap;gap:1.2rem;align-items:center;justify-content:space-between;margin-top:1.6rem;padding:1.6rem;background:var(--phbl-cream);border-radius:var(--phbl-radius)">
+        <div class="phbl-price">
+          <span>{{ 'phbl.fbt.total' | t: count: n }}</span>
+          <span class="phbl-price__sale">{{ total | money }}</span>
+          {%- if mrp_total > total -%}<s class="phbl-price__mrp">{{ mrp_total | money }}</s>{%- endif -%}
+        </div>
+        <button type="button" class="phbl-btn phbl-btn--accent" data-quick-add data-variant-ids="{{ ids }}">{{ 'phbl.fbt.add_all' | t: count: n }}</button>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Bought together",
+  "tag": "section",
+  "enabled_on": { "templates": ["product"] },
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "Frequently bought together" }],
+  "presets": [{ "name": "PHBL Frequently bought together" }]
+}
+{% endschema %}

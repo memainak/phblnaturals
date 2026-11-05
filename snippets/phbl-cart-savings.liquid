@@ -1,0 +1,16 @@
+{%- liquid
+  assign mrp_total = 0
+  for item in cart.items
+    assign unit_mrp = item.variant.compare_at_price | default: item.original_price
+    if unit_mrp < item.original_price
+      assign unit_mrp = item.original_price
+    endif
+    assign line_mrp = unit_mrp | times: item.quantity
+    assign mrp_total = mrp_total | plus: line_mrp
+  endfor
+  assign savings = mrp_total | minus: cart.total_price
+  assign savings_money = savings | money_without_trailing_zeros
+-%}
+{%- if savings > 0 -%}
+  <p class="phbl-savings" role="status">{{ 'phbl.cart.savings' | t: amount: savings_money }}</p>
+{%- endif -%}

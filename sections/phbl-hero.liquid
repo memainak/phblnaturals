@@ -1,0 +1,69 @@
+{%- comment -%} Hero slideshow: separate desktop (16:5) and mobile (4:5) art. First slide is eager + high priority for LCP. {%- endcomment -%}
+{%- style -%}
+  #shopify-section-{{ section.id }} .phbl-hero { position: relative; }
+  #shopify-section-{{ section.id }} .phbl-hero__track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  #shopify-section-{{ section.id }} .phbl-hero__track::-webkit-scrollbar { display: none; }
+  #shopify-section-{{ section.id }} .phbl-hero__slide { flex: 0 0 100%; scroll-snap-align: start; display: block; position: relative; }
+  #shopify-section-{{ section.id }} picture, #shopify-section-{{ section.id }} img { display: block; width: 100%; height: auto; }
+  #shopify-section-{{ section.id }} .phbl-hero__ph { aspect-ratio: 4/5; background: var(--phbl-secondary); }
+  @media (min-width: 750px) { #shopify-section-{{ section.id }} .phbl-hero__ph { aspect-ratio: 16/5; } }
+  #shopify-section-{{ section.id }} .phbl-hero__dots { position: absolute; bottom: 1.2rem; left: 50%; transform: translateX(-50%); display: flex; gap: .6rem; }
+  #shopify-section-{{ section.id }} .phbl-hero__dot { width: .8rem; height: .8rem; border-radius: 1rem; border: 0; padding: 0; background: rgba(255,255,255,.6); cursor: pointer; transition: width .2s; }
+  #shopify-section-{{ section.id }} .phbl-hero__dot[aria-current="true"] { width: 2.4rem; background: #fff; }
+{%- endstyle -%}
+<phbl-slider class="phbl-hero" data-autoplay="{% if section.settings.autoplay %}{{ section.settings.speed }}{% endif %}" aria-roledescription="carousel">
+  <div class="phbl-hero__track">
+    {%- for block in section.blocks -%}
+      {%- liquid
+        assign loading = 'lazy'
+        assign priority = 'auto'
+        if forloop.first
+          assign loading = 'eager'
+          assign priority = 'high'
+        endif
+        assign mobile = block.settings.image_mobile | default: block.settings.image_desktop
+      -%}
+      <a class="phbl-hero__slide" href="{{ block.settings.link | default: '#' }}" {{ block.shopify_attributes }} aria-label="{{ block.settings.alt | escape }}">
+        {%- if block.settings.image_desktop != blank -%}
+          <picture>
+            <source media="(min-width: 750px)" srcset="{{ block.settings.image_desktop | image_url: width: 1500 }} 1500w, {{ block.settings.image_desktop | image_url: width: 2200 }} 2200w, {{ block.settings.image_desktop | image_url: width: 2880 }} 2880w" sizes="100vw" width="{{ block.settings.image_desktop.width }}" height="{{ block.settings.image_desktop.height }}">
+            {{ mobile | image_url: width: 1080 | image_tag: loading: loading, fetchpriority: priority, widths: '375,540,750,1080', sizes: '100vw', alt: block.settings.alt }}
+          </picture>
+        {%- else -%}
+          <div class="phbl-hero__ph">{{ 'lifestyle-1' | placeholder_svg_tag: 'placeholder-svg' }}</div>
+        {%- endif -%}
+      </a>
+    {%- endfor -%}
+  </div>
+  {%- if section.blocks.size > 1 -%}
+    <div class="phbl-hero__dots">
+      {%- for block in section.blocks -%}
+        <button type="button" class="phbl-hero__dot" aria-label="{{ 'phbl.general.slide' | t: n: forloop.index }}" aria-current="{{ forloop.first }}"></button>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</phbl-slider>
+{% schema %}
+{
+  "name": "PHBL Hero slideshow",
+  "tag": "section",
+  "settings": [
+    { "type": "checkbox", "id": "autoplay", "label": "Autoplay", "default": true },
+    { "type": "range", "id": "speed", "label": "Seconds per slide", "min": 3, "max": 10, "step": 1, "default": 5 }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        { "type": "image_picker", "id": "image_desktop", "label": "Desktop image (16:5, e.g. 2880×900)" },
+        { "type": "image_picker", "id": "image_mobile", "label": "Mobile image (4:5, e.g. 1080×1350)" },
+        { "type": "text", "id": "alt", "label": "Alt text / offer description", "default": "PHBL Naturals offer" },
+        { "type": "url", "id": "link", "label": "Link" }
+      ]
+    }
+  ],
+  "max_blocks": 8,
+  "presets": [{ "name": "PHBL Hero slideshow", "blocks": [{ "type": "slide" }, { "type": "slide" }] }]
+}
+{% endschema %}

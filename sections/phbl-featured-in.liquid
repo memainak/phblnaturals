@@ -1,0 +1,31 @@
+{%- liquid
+  assign has_logo = false
+  for block in section.blocks
+    if block.settings.logo != blank
+      assign has_logo = true
+    endif
+  endfor
+-%}
+{%- if has_logo -%}
+  <div class="phbl-section page-width">
+    <div class="phbl-heading" style="justify-content:center"><h2 class="h4">{{ section.settings.heading }}</h2></div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3.2rem">
+      {%- for block in section.blocks -%}
+        {%- if block.settings.logo != blank -%}
+          <a href="{{ block.settings.link | default: '#' }}" {{ block.shopify_attributes }} target="_blank" rel="noopener" style="filter:grayscale(1);opacity:.7">
+            {{ block.settings.logo | image_url: height: 80 | image_tag: loading: 'lazy', height: 40, style: 'height:4rem;width:auto', alt: block.settings.name }}
+          </a>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Featured in",
+  "tag": "section",
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "As featured in" }, { "type": "paragraph", "content": "Hidden automatically when no logos are added." }],
+  "blocks": [{ "type": "logo", "name": "Logo", "settings": [{ "type": "image_picker", "id": "logo", "label": "Logo" }, { "type": "text", "id": "name", "label": "Publication name" }, { "type": "url", "id": "link", "label": "Article link" }] }],
+  "presets": [{ "name": "PHBL Featured in" }]
+}
+{% endschema %}

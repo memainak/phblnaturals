@@ -1,0 +1,19 @@
+{%- if request.page_type == 'index' -%}
+  {%- capture same_as -%}
+    {%- assign socials = settings.social_instagram_link | append: '|' | append: settings.social_facebook_link | append: '|' | append: settings.social_youtube_link | append: '|' | append: settings.social_twitter_link | split: '|' -%}
+    {%- for s in socials -%}{%- if s != blank -%}{{ s | json }},{%- endif -%}{%- endfor -%}
+  {%- endcapture -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": {{ shop.name | json }},
+      "url": {{ request.origin | append: routes.root_url | json }},
+      {%- if settings.logo -%}"logo": {{ settings.logo | image_url: width: 600 | prepend: 'https:' | json }},{%- endif -%}
+      {%- if settings.care_phone != blank -%}
+      "contactPoint": { "@type": "ContactPoint", "telephone": {{ settings.care_phone | json }}, "contactType": "customer service", "areaServed": "IN", "availableLanguage": ["en", "bn"] },
+      {%- endif -%}
+      "sameAs": [{{ same_as | strip | remove_last: ',' }}]
+    }
+  </script>
+{%- endif -%}

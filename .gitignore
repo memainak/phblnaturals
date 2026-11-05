@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+.shopify/
+
+# Local archive of the storefront; the sources live in frontend/
+phbl_naturals_website_final.zip

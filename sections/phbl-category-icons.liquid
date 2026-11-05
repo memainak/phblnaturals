@@ -1,0 +1,42 @@
+<div class="phbl-section page-width">
+  {%- if section.settings.heading != blank -%}<div class="phbl-heading"><h2 class="h3">{{ section.settings.heading }}</h2></div>{%- endif -%}
+  <div class="{% if section.settings.style == 'pill' %}phbl-pillrow{% else %}phbl-scroller phbl-scroller--icons{% endif %}">
+    {%- for block in section.blocks -%}
+      {%- assign c = block.settings.collection -%}
+      {%- assign img = block.settings.image | default: c.featured_image -%}
+      {%- if section.settings.style == 'pill' -%}
+        <a class="phbl-pill" href="{{ block.settings.link | default: c.url }}" {{ block.shopify_attributes }}>{{ block.settings.label | default: c.title }}</a>
+      {%- else -%}
+        <a class="phbl-tile{% if section.settings.style == 'card' %} phbl-tile--card{% endif %}" href="{{ block.settings.link | default: c.url }}" {{ block.shopify_attributes }}>
+          <span class="phbl-tile__img">
+            {%- if img != blank -%}{{ img | image_url: width: 240 | image_tag: loading: 'lazy', widths: '120,240', sizes: '96px', alt: '' }}{%- else -%}{{ 'collection-1' | placeholder_svg_tag }}{%- endif -%}
+          </span>
+          <span class="phbl-tile__label">{{ block.settings.label | default: c.title }}</span>
+        </a>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "PHBL Category icons",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Shop by Category" },
+    { "type": "select", "id": "style", "label": "Style", "options": [{ "value": "circle", "label": "Circle icons" }, { "value": "card", "label": "Rounded cards" }, { "value": "pill", "label": "Text pills" }], "default": "circle" }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category",
+      "settings": [
+        { "type": "collection", "id": "collection", "label": "Collection" },
+        { "type": "image_picker", "id": "image", "label": "Icon/image (optional, 1:1)" },
+        { "type": "text", "id": "label", "label": "Label (optional)" },
+        { "type": "url", "id": "link", "label": "Custom link (optional)" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "PHBL Category icons", "blocks": [{ "type": "category" }, { "type": "category" }, { "type": "category" }, { "type": "category" }, { "type": "category" }] }]
+}
+{% endschema %}

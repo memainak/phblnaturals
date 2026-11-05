@@ -1,0 +1,20 @@
+{%- assign wa = settings.whatsapp_number | remove: '+' | remove: ' ' | remove: '-' -%}
+<div class="phbl-section page-width" style="max-width:80rem">
+  <div class="phbl-grid" style="--cols-mobile: 1; --cols-desktop: 3">
+    {%- if wa != blank -%}<a class="phbl-offer" href="https://wa.me/{{ wa }}?text={{ settings.whatsapp_message | url_encode }}" target="_blank" rel="noopener"><strong>WhatsApp</strong><span>{{ 'phbl.contact.chat' | t }}</span></a>{%- endif -%}
+    {%- if settings.care_phone != blank -%}<a class="phbl-offer" href="tel:{{ settings.care_phone | remove: ' ' }}"><strong>{{ 'phbl.contact.call' | t }}</strong><span>{{ settings.care_phone }}</span></a>{%- endif -%}
+    {%- if settings.care_email != blank -%}<a class="phbl-offer" href="mailto:{{ settings.care_email }}"><strong>{{ 'phbl.contact.email' | t }}</strong><span>{{ settings.care_email }}</span></a>{%- endif -%}
+  </div>
+  {%- if settings.company_address != blank -%}<p style="margin-top:2rem">{{ settings.company_address | newline_to_br }}</p>{%- endif -%}
+  {%- if section.settings.map_embed != blank -%}
+    <iframe src="{{ section.settings.map_embed }}" loading="lazy" title="{{ 'phbl.contact.map' | t }}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:var(--phbl-radius);margin-top:1.6rem" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  {%- endif -%}
+</div>
+{% schema %}
+{
+  "name": "PHBL Contact info",
+  "tag": "section",
+  "settings": [{ "type": "text", "id": "map_embed", "label": "Google Maps embed URL (https://www.google.com/maps/embed?...)" }],
+  "presets": [{ "name": "PHBL Contact info" }]
+}
+{% endschema %}

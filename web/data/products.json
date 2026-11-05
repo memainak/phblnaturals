@@ -1,0 +1,959 @@
+[
+  {
+    "handle": "neem-tulsi-face-wash",
+    "title": "Neem & Tulsi Face Wash",
+    "type": "Face Wash",
+    "category": "face-care",
+    "badge": "BESTSELLER",
+    "tagline": "Cleanses excess oil and leaves skin feeling fresh",
+    "suitableFor": "Oily & Combination Skin",
+    "concerns": [
+      "acne"
+    ],
+    "ingredients": [
+      "neem"
+    ],
+    "tags": [
+      "bestseller"
+    ],
+    "rating": 4.6,
+    "reviewCount": 0,
+    "description": "A gentle daily cleanser with neem and tulsi that lifts away excess oil, sweat and city grime without leaving skin tight. Builds into a soft lather and rinses clean.",
+    "benefits": [
+      {
+        "icon": "drop",
+        "title": "Controls excess oil"
+      },
+      {
+        "icon": "leaf",
+        "title": "Neem + tulsi blend"
+      },
+      {
+        "icon": "feather",
+        "title": "Soap-free, gentle daily use"
+      }
+    ],
+    "howToUse": "Wet your face. Take a coin-sized amount, massage in circles for 30 seconds, avoiding the eye area. Rinse with water. Use morning and night.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Aqua, Cocamidopropyl Betaine, Glycerin, Azadirachta Indica (Neem) Leaf Extract, Ocimum Sanctum (Tulsi) Leaf Extract, …",
+    "netQuantity": "100 ml",
+    "variants": [
+      {
+        "size": "100 ml",
+        "sku": "PHBL-FW-NT-100",
+        "price": 249,
+        "mrp": 299,
+        "grams": 120,
+        "stock": 50
+      },
+      {
+        "size": "200 ml",
+        "sku": "PHBL-FW-NT-200",
+        "price": 429,
+        "mrp": 499,
+        "grams": 230,
+        "stock": 40
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Will it dry out my skin?",
+        "a": "No. It is soap-free and pH-balanced, so it cleanses without stripping moisture. Follow with a moisturiser."
+      },
+      {
+        "q": "Can I use it twice a day?",
+        "a": "Yes, morning and night is ideal for oily and combination skin."
+      }
+    ],
+    "related": [
+      "aloe-vera-gel",
+      "ubtan-face-pack"
+    ],
+    "frequentlyBoughtTogether": [
+      "aloe-vera-gel"
+    ],
+    "images": []
+  },
+  {
+    "handle": "aloe-vera-gel",
+    "title": "Aloe Vera Soothing Gel",
+    "type": "Face & Body Gel",
+    "category": "face-care",
+    "badge": "TOP PICK",
+    "tagline": "Soothes and hydrates for soft, supple skin",
+    "suitableFor": "All Skin Types",
+    "concerns": [
+      "dryness",
+      "sensitive"
+    ],
+    "ingredients": [
+      "aloe-vera"
+    ],
+    "tags": [
+      "bestseller"
+    ],
+    "rating": 4.7,
+    "reviewCount": 0,
+    "description": "A light, fast-absorbing aloe gel for face, body and after-sun care. Calms the look of redness and leaves skin feeling cool and comfortable.",
+    "benefits": [
+      {
+        "icon": "drop",
+        "title": "Lightweight hydration"
+      },
+      {
+        "icon": "feather",
+        "title": "Calms the look of redness"
+      },
+      {
+        "icon": "sun",
+        "title": "Great after sun exposure"
+      }
+    ],
+    "howToUse": "Apply a thin layer on clean skin as often as needed. Can be used as a light moisturiser, after shaving, or as a soothing hair-and-scalp gel.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Aloe Barbadensis Leaf Juice, Aqua, Glycerin, Carbomer, …",
+    "netQuantity": "100 g",
+    "variants": [
+      {
+        "size": "100 g",
+        "sku": "PHBL-GL-AV-100",
+        "price": 199,
+        "mrp": 249,
+        "grams": 120,
+        "stock": 60
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Is it sticky?",
+        "a": "No, it absorbs in under a minute and leaves no residue."
+      }
+    ],
+    "related": [
+      "neem-tulsi-face-wash",
+      "cocoa-body-lotion"
+    ],
+    "frequentlyBoughtTogether": [
+      "neem-tulsi-face-wash"
+    ],
+    "images": []
+  },
+  {
+    "handle": "turmeric-glow-cream",
+    "title": "Turmeric Glow Day Cream",
+    "type": "Face Cream",
+    "category": "face-care",
+    "badge": "NEW",
+    "tagline": "Moisturises and reduces the appearance of dullness",
+    "suitableFor": "Normal to Dry Skin",
+    "concerns": [
+      "dullness",
+      "dryness"
+    ],
+    "ingredients": [
+      "turmeric"
+    ],
+    "tags": [
+      "new-launch"
+    ],
+    "rating": 4.5,
+    "reviewCount": 0,
+    "description": "A non-greasy day cream with turmeric that moisturises for hours and helps skin look brighter and more even over time.",
+    "benefits": [
+      {
+        "icon": "sun",
+        "title": "Brighter-looking skin"
+      },
+      {
+        "icon": "drop",
+        "title": "All-day moisture"
+      },
+      {
+        "icon": "feather",
+        "title": "Non-greasy finish"
+      }
+    ],
+    "howToUse": "Apply in the morning on clean skin. Warm a pea-sized amount between fingers and press into face and neck.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Aqua, Glycerin, Cetearyl Alcohol, Curcuma Longa (Turmeric) Root Extract, …",
+    "netQuantity": "50 g",
+    "variants": [
+      {
+        "size": "50 g",
+        "sku": "PHBL-CR-TG-50",
+        "price": 349,
+        "mrp": 399,
+        "grams": 80,
+        "stock": 35
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Will turmeric stain my skin?",
+        "a": "No. The extract is used at a cosmetic level that does not leave a yellow cast."
+      }
+    ],
+    "related": [
+      "ubtan-face-pack",
+      "kumkumadi-face-oil"
+    ],
+    "frequentlyBoughtTogether": [
+      "ubtan-face-pack"
+    ],
+    "images": []
+  },
+  {
+    "handle": "kumkumadi-face-oil",
+    "title": "Kumkumadi Face Oil",
+    "type": "Face Oil",
+    "category": "face-care",
+    "badge": "",
+    "tagline": "Nourishes for a naturally radiant look",
+    "suitableFor": "All Skin Types",
+    "concerns": [
+      "dullness",
+      "dryness"
+    ],
+    "ingredients": [
+      "turmeric"
+    ],
+    "tags": [],
+    "rating": 4.6,
+    "reviewCount": 0,
+    "description": "A classic overnight facial oil blend. A few drops massaged in at night leave skin looking rested, soft and naturally radiant by morning.",
+    "benefits": [
+      {
+        "icon": "moon",
+        "title": "Overnight nourishment"
+      },
+      {
+        "icon": "sun",
+        "title": "Radiant-looking skin"
+      },
+      {
+        "icon": "drop",
+        "title": "A few drops are enough"
+      }
+    ],
+    "howToUse": "At night, warm 3–4 drops in your palms and press into clean, slightly damp skin. Massage upwards for a minute.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Sesamum Indicum Seed Oil, Crocus Sativus Flower Extract, …",
+    "netQuantity": "30 ml",
+    "variants": [
+      {
+        "size": "30 ml",
+        "sku": "PHBL-OL-KK-30",
+        "price": 499,
+        "mrp": 599,
+        "grams": 70,
+        "stock": 25
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can oily skin use a face oil?",
+        "a": "Yes, in small amounts at night. Start with 2 drops twice a week and build up."
+      }
+    ],
+    "related": [
+      "turmeric-glow-cream",
+      "ubtan-face-pack"
+    ],
+    "frequentlyBoughtTogether": [
+      "turmeric-glow-cream"
+    ],
+    "images": []
+  },
+  {
+    "handle": "ubtan-face-pack",
+    "title": "Ubtan Face Pack",
+    "type": "Face Pack",
+    "category": "face-care",
+    "badge": "TRENDING",
+    "tagline": "Gently exfoliates for brighter-looking skin",
+    "suitableFor": "All Skin Types",
+    "concerns": [
+      "dullness"
+    ],
+    "ingredients": [
+      "turmeric"
+    ],
+    "tags": [],
+    "rating": 4.4,
+    "reviewCount": 0,
+    "description": "A traditional ubtan of gram flour, turmeric and botanicals. Mix with water, milk or curd for a weekly mask that leaves skin feeling smooth and looking fresh.",
+    "benefits": [
+      {
+        "icon": "sparkle",
+        "title": "Gentle weekly exfoliation"
+      },
+      {
+        "icon": "sun",
+        "title": "Fresher-looking skin"
+      },
+      {
+        "icon": "leaf",
+        "title": "Traditional ubtan blend"
+      }
+    ],
+    "howToUse": "Mix 1 tsp with water, milk or curd into a paste. Apply an even layer, avoiding the eyes. Leave for 10–15 minutes, then rinse with lukewarm water. Use once or twice a week.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Cicer Arietinum (Gram) Flour, Curcuma Longa Root Powder, Santalum Album Powder, …",
+    "netQuantity": "100 g",
+    "variants": [
+      {
+        "size": "100 g",
+        "sku": "PHBL-FP-UB-100",
+        "price": 299,
+        "mrp": 349,
+        "grams": 120,
+        "stock": 45
+      }
+    ],
+    "faqs": [
+      {
+        "q": "How often should I use it?",
+        "a": "Once or twice a week is plenty. Sensitive skin should start with once a week."
+      }
+    ],
+    "related": [
+      "turmeric-glow-cream",
+      "neem-tulsi-face-wash"
+    ],
+    "frequentlyBoughtTogether": [
+      "turmeric-glow-cream"
+    ],
+    "images": []
+  },
+  {
+    "handle": "bhringraj-hair-oil",
+    "title": "Bhringraj Hair Oil",
+    "type": "Hair Oil",
+    "category": "hair-care",
+    "badge": "BESTSELLER",
+    "tagline": "Nourishes roots and reduces hair breakage",
+    "suitableFor": "All Hair Types",
+    "concerns": [
+      "hair-fall"
+    ],
+    "ingredients": [
+      "bhringraj"
+    ],
+    "tags": [
+      "bestseller"
+    ],
+    "rating": 4.8,
+    "reviewCount": 0,
+    "description": "A slow-infused bhringraj oil for the weekly champi. Massaged into the scalp, it conditions the roots and lengths so hair breaks less when you comb.",
+    "benefits": [
+      {
+        "icon": "leaf",
+        "title": "Bhringraj-infused"
+      },
+      {
+        "icon": "shield",
+        "title": "Less breakage"
+      },
+      {
+        "icon": "drop",
+        "title": "Non-sticky after wash"
+      }
+    ],
+    "howToUse": "Warm slightly. Part hair and apply along the scalp, then work through the lengths. Massage for 5 minutes and leave for at least an hour, or overnight. Wash out with a mild shampoo.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Cocos Nucifera (Coconut) Oil, Eclipta Alba (Bhringraj) Extract, Sesamum Indicum Seed Oil, …",
+    "netQuantity": "100 ml",
+    "variants": [
+      {
+        "size": "100 ml",
+        "sku": "PHBL-HO-BR-100",
+        "price": 299,
+        "mrp": 349,
+        "grams": 130,
+        "stock": 55
+      },
+      {
+        "size": "200 ml",
+        "sku": "PHBL-HO-BR-200",
+        "price": 499,
+        "mrp": 599,
+        "grams": 240,
+        "stock": 40
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can I leave it overnight?",
+        "a": "Yes. Cover your pillow and wash it out in the morning with a mild shampoo."
+      },
+      {
+        "q": "How often should I oil my hair?",
+        "a": "Once or twice a week suits most hair types."
+      }
+    ],
+    "related": [
+      "neem-anti-dandruff-shampoo",
+      "hibiscus-conditioner"
+    ],
+    "frequentlyBoughtTogether": [
+      "neem-anti-dandruff-shampoo"
+    ],
+    "images": []
+  },
+  {
+    "handle": "neem-anti-dandruff-shampoo",
+    "title": "Neem Anti-Dandruff Shampoo",
+    "type": "Shampoo",
+    "category": "hair-care",
+    "badge": "",
+    "tagline": "Cleanses scalp and helps control visible flakes",
+    "suitableFor": "All Hair Types",
+    "concerns": [
+      "dandruff"
+    ],
+    "ingredients": [
+      "neem"
+    ],
+    "tags": [],
+    "rating": 4.3,
+    "reviewCount": 0,
+    "description": "A clarifying neem shampoo for flaky, itchy scalps. Cleans thoroughly without the squeaky, stripped feeling of harsh anti-dandruff formulas.",
+    "benefits": [
+      {
+        "icon": "sparkle",
+        "title": "Controls visible flakes"
+      },
+      {
+        "icon": "leaf",
+        "title": "Neem + plant cleansers"
+      },
+      {
+        "icon": "feather",
+        "title": "No sulphate-harshness"
+      }
+    ],
+    "howToUse": "Apply to wet hair, massage into the scalp, leave for 2 minutes, then rinse. Repeat if needed. Use 2–3 times a week.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Aqua, Sodium Cocoyl Isethionate, Cocamidopropyl Betaine, Azadirachta Indica Leaf Extract, …",
+    "netQuantity": "200 ml",
+    "variants": [
+      {
+        "size": "200 ml",
+        "sku": "PHBL-SH-NM-200",
+        "price": 349,
+        "mrp": 399,
+        "grams": 240,
+        "stock": 40
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Is it colour-safe?",
+        "a": "Yes, it is free of sulphates that strip colour, but always patch-test with new treatments."
+      }
+    ],
+    "related": [
+      "bhringraj-hair-oil",
+      "hibiscus-conditioner"
+    ],
+    "frequentlyBoughtTogether": [
+      "hibiscus-conditioner"
+    ],
+    "images": []
+  },
+  {
+    "handle": "hibiscus-conditioner",
+    "title": "Hibiscus Conditioner",
+    "type": "Conditioner",
+    "category": "hair-care",
+    "badge": "NEW",
+    "tagline": "Softens and detangles for smooth hair",
+    "suitableFor": "Dry & Frizzy Hair",
+    "concerns": [
+      "dryness"
+    ],
+    "ingredients": [
+      "hibiscus"
+    ],
+    "tags": [
+      "new-launch"
+    ],
+    "rating": 4.5,
+    "reviewCount": 0,
+    "description": "A slip-rich conditioner with hibiscus that makes wet hair easy to comb and leaves it soft and smooth once dry.",
+    "benefits": [
+      {
+        "icon": "feather",
+        "title": "Easy detangling"
+      },
+      {
+        "icon": "drop",
+        "title": "Smooths frizz"
+      },
+      {
+        "icon": "leaf",
+        "title": "Hibiscus extract"
+      }
+    ],
+    "howToUse": "After shampooing, squeeze out excess water. Apply from mid-length to ends, leave for 2–3 minutes, then rinse.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Aqua, Cetearyl Alcohol, Behentrimonium Chloride, Hibiscus Rosa-Sinensis Flower Extract, …",
+    "netQuantity": "200 ml",
+    "variants": [
+      {
+        "size": "200 ml",
+        "sku": "PHBL-CD-HB-200",
+        "price": 349,
+        "mrp": 399,
+        "grams": 240,
+        "stock": 35
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can I use it on oiled hair?",
+        "a": "Yes, use it after you shampoo the oil out."
+      }
+    ],
+    "related": [
+      "neem-anti-dandruff-shampoo",
+      "bhringraj-hair-oil"
+    ],
+    "frequentlyBoughtTogether": [
+      "neem-anti-dandruff-shampoo"
+    ],
+    "images": []
+  },
+  {
+    "handle": "cocoa-body-lotion",
+    "title": "Cocoa & Shea Body Lotion",
+    "type": "Body Lotion",
+    "category": "body-care",
+    "badge": "",
+    "tagline": "48-hour moisture for soft, smooth skin",
+    "suitableFor": "Dry Skin",
+    "concerns": [
+      "dryness"
+    ],
+    "ingredients": [
+      "shea"
+    ],
+    "tags": [],
+    "rating": 4.6,
+    "reviewCount": 0,
+    "description": "A rich but fast-sinking lotion with cocoa and shea butter. One application in the morning keeps dry skin comfortable all day.",
+    "benefits": [
+      {
+        "icon": "drop",
+        "title": "Long-lasting moisture"
+      },
+      {
+        "icon": "feather",
+        "title": "Sinks in fast"
+      },
+      {
+        "icon": "leaf",
+        "title": "Cocoa + shea butter"
+      }
+    ],
+    "howToUse": "Smooth over clean, slightly damp skin after a bath. Pay extra attention to elbows, knees and heels.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Aqua, Butyrospermum Parkii (Shea) Butter, Theobroma Cacao Seed Butter, Glycerin, …",
+    "netQuantity": "200 ml",
+    "variants": [
+      {
+        "size": "200 ml",
+        "sku": "PHBL-BL-CS-200",
+        "price": 349,
+        "mrp": 399,
+        "grams": 240,
+        "stock": 45
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Is the fragrance strong?",
+        "a": "It is a soft cocoa scent that fades within an hour."
+      }
+    ],
+    "related": [
+      "sandalwood-body-wash",
+      "aloe-vera-gel"
+    ],
+    "frequentlyBoughtTogether": [
+      "sandalwood-body-wash"
+    ],
+    "images": []
+  },
+  {
+    "handle": "sandalwood-body-wash",
+    "title": "Sandalwood Body Wash",
+    "type": "Body Wash",
+    "category": "body-care",
+    "badge": "",
+    "tagline": "Gentle cleansing with a calming fragrance",
+    "suitableFor": "All Skin Types",
+    "concerns": [
+      "sensitive"
+    ],
+    "ingredients": [
+      "sandalwood"
+    ],
+    "tags": [],
+    "rating": 4.4,
+    "reviewCount": 0,
+    "description": "A creamy body wash with a warm sandalwood scent that cleanses without leaving skin tight or dry.",
+    "benefits": [
+      {
+        "icon": "feather",
+        "title": "Soap-free cleansing"
+      },
+      {
+        "icon": "leaf",
+        "title": "Classic sandalwood"
+      },
+      {
+        "icon": "drop",
+        "title": "Skin stays soft"
+      }
+    ],
+    "howToUse": "Squeeze onto a loofah or palm, lather over wet skin and rinse.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Aqua, Cocamidopropyl Betaine, Glycerin, Santalum Album Oil, …",
+    "netQuantity": "250 ml",
+    "variants": [
+      {
+        "size": "250 ml",
+        "sku": "PHBL-BW-SW-250",
+        "price": 299,
+        "mrp": 349,
+        "grams": 280,
+        "stock": 50
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Is it suitable for daily use?",
+        "a": "Yes, it is mild enough for everyday showers."
+      }
+    ],
+    "related": [
+      "cocoa-body-lotion",
+      "aloe-neem-soap"
+    ],
+    "frequentlyBoughtTogether": [
+      "cocoa-body-lotion"
+    ],
+    "images": []
+  },
+  {
+    "handle": "beetroot-lip-balm",
+    "title": "Beetroot Tinted Lip Balm",
+    "type": "Lip Balm",
+    "category": "lip-care",
+    "badge": "BESTSELLER",
+    "tagline": "Nourishes lips with a natural tint",
+    "suitableFor": "All Lip Types",
+    "concerns": [
+      "dryness"
+    ],
+    "ingredients": [
+      "beetroot"
+    ],
+    "tags": [
+      "bestseller"
+    ],
+    "rating": 4.7,
+    "reviewCount": 0,
+    "description": "A buttery balm with a sheer beetroot tint. Softens dry, chapped lips and leaves a natural flush of colour.",
+    "benefits": [
+      {
+        "icon": "drop",
+        "title": "Softens dry lips"
+      },
+      {
+        "icon": "sparkle",
+        "title": "Sheer natural tint"
+      },
+      {
+        "icon": "leaf",
+        "title": "Beetroot extract"
+      }
+    ],
+    "howToUse": "Swipe over clean lips as often as needed, and always before bed.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Ricinus Communis Seed Oil, Cera Alba, Butyrospermum Parkii Butter, Beta Vulgaris Root Extract, …",
+    "netQuantity": "4.5 g",
+    "variants": [
+      {
+        "size": "4.5 g",
+        "sku": "PHBL-LB-BT-45",
+        "price": 149,
+        "mrp": 199,
+        "grams": 20,
+        "stock": 80
+      }
+    ],
+    "faqs": [
+      {
+        "q": "How strong is the tint?",
+        "a": "It is sheer. Build up two or three layers for more colour."
+      }
+    ],
+    "related": [
+      "aloe-vera-gel",
+      "cocoa-body-lotion"
+    ],
+    "frequentlyBoughtTogether": [
+      "aloe-vera-gel"
+    ],
+    "images": []
+  },
+  {
+    "handle": "aloe-neem-soap",
+    "title": "Aloe Neem Handmade Soap",
+    "type": "Soap",
+    "category": "body-care",
+    "badge": "",
+    "tagline": "Cleanses gently without stripping moisture",
+    "suitableFor": "All Skin Types",
+    "concerns": [
+      "acne",
+      "sensitive"
+    ],
+    "ingredients": [
+      "neem",
+      "aloe-vera"
+    ],
+    "tags": [],
+    "rating": 4.5,
+    "reviewCount": 0,
+    "description": "A cold-process bar with aloe and neem. Lathers softly, rinses clean and leaves skin feeling comfortable rather than squeaky.",
+    "benefits": [
+      {
+        "icon": "leaf",
+        "title": "Aloe + neem"
+      },
+      {
+        "icon": "feather",
+        "title": "Handmade in small batches"
+      },
+      {
+        "icon": "drop",
+        "title": "Non-stripping lather"
+      }
+    ],
+    "howToUse": "Lather between wet palms or on a loofah, massage over the body and rinse. Store on a draining dish between uses.",
+    "fullIngredients": "REPLACE WITH REAL INCI LIST: Sodium Palmate, Sodium Cocoate, Aqua, Aloe Barbadensis Leaf Juice, Azadirachta Indica Leaf Extract, …",
+    "netQuantity": "100 g",
+    "variants": [
+      {
+        "size": "100 g",
+        "sku": "PHBL-SP-AN-100",
+        "price": 99,
+        "mrp": 129,
+        "grams": 110,
+        "stock": 100
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can I use it on my face?",
+        "a": "It is formulated for the body. For the face, use the Neem & Tulsi Face Wash."
+      }
+    ],
+    "related": [
+      "sandalwood-body-wash",
+      "neem-tulsi-face-wash"
+    ],
+    "frequentlyBoughtTogether": [
+      "sandalwood-body-wash"
+    ],
+    "images": []
+  },
+  {
+    "handle": "clear-skin-combo",
+    "title": "Clear Skin Combo",
+    "type": "Combo",
+    "category": "combos",
+    "badge": "TOP PICK",
+    "tagline": "Your 2-step routine for fresh, clear-looking skin",
+    "suitableFor": "Oily & Combination Skin",
+    "concerns": [
+      "acne"
+    ],
+    "ingredients": [
+      "neem",
+      "aloe-vera"
+    ],
+    "tags": [
+      "combo",
+      "offer"
+    ],
+    "rating": 4.6,
+    "reviewCount": 0,
+    "description": "The Neem & Tulsi Face Wash and Aloe Vera Soothing Gel together: cleanse away excess oil, then calm and hydrate. Costs less than buying both separately.",
+    "benefits": [
+      {
+        "icon": "sparkle",
+        "title": "Complete 2-step routine"
+      },
+      {
+        "icon": "tag",
+        "title": "Cheaper than buying separately"
+      },
+      {
+        "icon": "leaf",
+        "title": "Neem + aloe"
+      }
+    ],
+    "howToUse": "Morning and night: cleanse with the face wash, pat dry, then smooth on a thin layer of aloe gel.",
+    "fullIngredients": "See the individual product pages for each full ingredient list.",
+    "netQuantity": "100 ml + 100 g",
+    "comboItems": [
+      "neem-tulsi-face-wash",
+      "aloe-vera-gel"
+    ],
+    "variants": [
+      {
+        "size": "Combo",
+        "sku": "PHBL-CB-CS",
+        "price": 399,
+        "mrp": 548,
+        "grams": 250,
+        "stock": 30
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Are the sizes full-size?",
+        "a": "Yes, both products are the full retail size, not samples."
+      }
+    ],
+    "related": [
+      "glow-routine-combo",
+      "hair-care-combo"
+    ],
+    "images": []
+  },
+  {
+    "handle": "hair-care-combo",
+    "title": "Hair Care Combo",
+    "type": "Combo",
+    "category": "combos",
+    "badge": "",
+    "tagline": "Nourish and cleanse for stronger-looking hair",
+    "suitableFor": "All Hair Types",
+    "concerns": [
+      "hair-fall",
+      "dandruff"
+    ],
+    "ingredients": [
+      "bhringraj",
+      "neem"
+    ],
+    "tags": [
+      "combo",
+      "offer"
+    ],
+    "rating": 4.7,
+    "reviewCount": 0,
+    "description": "Bhringraj Hair Oil and Neem Anti-Dandruff Shampoo together: oil the scalp, then wash it out with a clarifying neem cleanser.",
+    "benefits": [
+      {
+        "icon": "sparkle",
+        "title": "Oil + wash routine"
+      },
+      {
+        "icon": "tag",
+        "title": "Save on the pair"
+      },
+      {
+        "icon": "leaf",
+        "title": "Bhringraj + neem"
+      }
+    ],
+    "howToUse": "Massage the oil into the scalp, leave for an hour or overnight, then wash with the shampoo. Once or twice a week.",
+    "fullIngredients": "See the individual product pages for each full ingredient list.",
+    "netQuantity": "100 ml + 200 ml",
+    "comboItems": [
+      "bhringraj-hair-oil",
+      "neem-anti-dandruff-shampoo"
+    ],
+    "variants": [
+      {
+        "size": "Combo",
+        "sku": "PHBL-CB-HC",
+        "price": 579,
+        "mrp": 748,
+        "grams": 380,
+        "stock": 30
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Which do I use first?",
+        "a": "Oil first, shampoo after. Never the other way round."
+      }
+    ],
+    "related": [
+      "clear-skin-combo",
+      "glow-routine-combo"
+    ],
+    "images": []
+  },
+  {
+    "handle": "glow-routine-combo",
+    "title": "Glow Routine Combo",
+    "type": "Combo",
+    "category": "combos",
+    "badge": "",
+    "tagline": "A 3-step ritual for naturally radiant-looking skin",
+    "suitableFor": "All Skin Types",
+    "concerns": [
+      "dullness"
+    ],
+    "ingredients": [
+      "turmeric"
+    ],
+    "tags": [
+      "combo",
+      "offer"
+    ],
+    "rating": 4.5,
+    "reviewCount": 0,
+    "description": "Ubtan Face Pack, Turmeric Glow Day Cream and Kumkumadi Face Oil: exfoliate weekly, moisturise by day, nourish overnight.",
+    "benefits": [
+      {
+        "icon": "sparkle",
+        "title": "Full 3-step ritual"
+      },
+      {
+        "icon": "tag",
+        "title": "Best value of the three"
+      },
+      {
+        "icon": "sun",
+        "title": "Day and night care"
+      }
+    ],
+    "howToUse": "Mask once or twice a week. Day cream every morning. Face oil every night.",
+    "fullIngredients": "See the individual product pages for each full ingredient list.",
+    "netQuantity": "100 g + 50 g + 30 ml",
+    "comboItems": [
+      "ubtan-face-pack",
+      "turmeric-glow-cream",
+      "kumkumadi-face-oil"
+    ],
+    "variants": [
+      {
+        "size": "Combo",
+        "sku": "PHBL-CB-GR",
+        "price": 999,
+        "mrp": 1347,
+        "grams": 280,
+        "stock": 25
+      }
+    ],
+    "faqs": [
+      {
+        "q": "Can I use the mask and oil on the same night?",
+        "a": "Yes. Mask first, rinse, then press in the oil."
+      }
+    ],
+    "related": [
+      "clear-skin-combo",
+      "hair-care-combo"
+    ],
+    "images": []
+  }
+]

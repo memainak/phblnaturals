@@ -1,0 +1,41 @@
+{%- comment -%}
+  Free delivery / free gift progress. Rendered inside the cart drawer, so it re-renders with every
+  cart change through Dawn's Section Rendering flow. Thresholds come from Theme settings (in ₹).
+  The gift itself is added by the gift-with-purchase app; keep its rule identical to free_gift_threshold.
+{%- endcomment -%}
+{%- if cart != empty -%}
+  {%- liquid
+    assign ship_t = settings.free_shipping_threshold | times: 100
+    assign gift_t = settings.free_gift_threshold | times: 100
+    assign total = cart.total_price
+    assign max_t = ship_t
+    if gift_t > max_t
+      assign max_t = gift_t
+    endif
+    assign pct = 100
+    if max_t > 0 and total < max_t
+      assign pct = total | times: 100 | divided_by: max_t
+    endif
+  -%}
+  {%- if max_t > 0 -%}
+    <div class="phbl-progress" role="status">
+      {%- if ship_t > 0 and total < ship_t -%}
+        {%- assign left = ship_t | minus: total | money_without_trailing_zeros -%}
+        {{ 'phbl.cart.away_from_shipping_html' | t: amount: left }}
+      {%- elsif gift_t > 0 and total < gift_t -%}
+        {%- assign left = gift_t | minus: total | money_without_trailing_zeros -%}
+        {{ 'phbl.cart.away_from_gift_html' | t: amount: left, gift: settings.free_gift_label }}
+      {%- else -%}
+        {{ 'phbl.cart.unlocked_all_html' | t: gift: settings.free_gift_label }}
+      {%- endif -%}
+      <div class="phbl-progress__bar" aria-hidden="true">
+        <div class="phbl-progress__fill" style="width: {{ pct }}%"></div>
+        {%- if ship_t > 0 and ship_t < max_t -%}
+          {%- assign m = ship_t | times: 100 | divided_by: max_t -%}
+          <span class="phbl-progress__mark{% if total >= ship_t %} is-done{% endif %}" style="left: {{ m }}%" title="{{ 'phbl.cart.free_delivery' | t }}"></span>
+        {%- endif -%}
+        <span class="phbl-progress__mark{% if total >= max_t %} is-done{% endif %}" style="left: 100%"></span>
+      </div>
+    </div>
+  {%- endif -%}
+{%- endif -%}

@@ -1,0 +1,7 @@
+{%- comment -%} Rendered only via the Section Rendering API for cart-drawer complementary upsells. {%- endcomment -%}
+{%- for p in recommendations.products -%}
+  {%- if p.available -%}{%- render 'phbl-mini-card', product: p -%}{%- endif -%}
+{%- endfor -%}
+{% schema %}
+{ "name": "PHBL upsell recs" }
+{% endschema %}

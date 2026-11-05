@@ -1,0 +1,39 @@
+<div class="phbl-section" style="background: var(--phbl-cream)">
+  <div class="page-width" style="display:grid;gap:2.4rem;align-items:center;grid-template-columns:repeat(auto-fit,minmax(28rem,1fr))">
+    <div style="border-radius:var(--phbl-radius);overflow:hidden">
+      {%- if section.settings.image -%}
+        {{ section.settings.image | image_url: width: 1200 | image_tag: loading: 'lazy', widths: '375,750,1200', sizes: '(min-width: 990px) 50vw, 100vw', style: 'width:100%;height:auto;display:block' }}
+      {%- else -%}{{ 'lifestyle-2' | placeholder_svg_tag: 'placeholder-svg' }}{%- endif -%}
+    </div>
+    <div>
+      {%- if section.settings.eyebrow != blank -%}<p class="phbl-card__suitable">{{ section.settings.eyebrow }}</p>{%- endif -%}
+      <h2 class="h2">{{ section.settings.heading }}</h2>
+      <div class="rte">{{ section.settings.text }}</div>
+      {%- if section.blocks.size > 0 -%}
+        <div style="display:flex;gap:2.4rem;flex-wrap:wrap;margin:2rem 0">
+          {%- for block in section.blocks -%}
+            <div {{ block.shopify_attributes }}><strong class="h2" style="display:block;color:var(--phbl-primary);margin:0">{{ block.settings.number }}</strong><span class="phbl-muted">{{ block.settings.label }}</span></div>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+      {%- if section.settings.cta_label != blank -%}<a class="phbl-btn" href="{{ section.settings.cta_link }}">{{ section.settings.cta_label }}</a>{%- endif -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "PHBL Heritage story",
+  "tag": "section",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Image (lab / founder)" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "From Purusottam Homeo Bikash Lab" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Rooted in 50+ years of natural healing" },
+    { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Tell the lab's story here: when it was founded, what it stands for, and how that knowledge shapes every PHBL Naturals formula.</p>" },
+    { "type": "text", "id": "cta_label", "label": "Button label", "default": "Our story" },
+    { "type": "url", "id": "cta_link", "label": "Button link" }
+  ],
+  "blocks": [{ "type": "stat", "name": "Stat", "settings": [{ "type": "text", "id": "number", "label": "Number", "default": "50+" }, { "type": "text", "id": "label", "label": "Label", "default": "Years of expertise" }] }],
+  "max_blocks": 4,
+  "presets": [{ "name": "PHBL Heritage story", "blocks": [{ "type": "stat" }] }]
+}
+{% endschema %}

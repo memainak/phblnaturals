@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>PHBL Naturals — Admin</title>
+<style>
+  :root {
+    --green: #426c3d;
+    --lime: #8ab661;
+    --cream: #f7f4ec;
+    --ink: #22281f;
+    --line: #dcd7c8;
+    --bad: #a13d32;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+  }
+  header {
+    background: var(--green);
+    color: #fff;
+    padding: 18px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  header h1 { font-size: 18px; margin: 0; flex: 1; }
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 14px; color: var(--green); }
+  input, select, button { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  button { cursor: pointer; background: var(--green); color: #fff; border-color: var(--green); }
+  button.ghost { background: #fff; color: var(--green); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #6b705f; }
+  .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .card { background: var(--cream); border-radius: 10px; padding: 12px 14px; }
+  .card b { display: block; font-size: 22px; }
+  .card span { font-size: 12px; color: #6b705f; text-transform: uppercase; letter-spacing: .05em; }
+  .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--cream); border: 1px solid var(--line); }
+  .pill.paid { background: #e5f0d9; border-color: var(--lime); }
+  .pill.unpaid, .pill.failed { background: #f6e3e0; border-color: var(--bad); color: var(--bad); }
+  .err { color: var(--bad); }
+  .muted { color: #6b705f; font-size: 13px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .hide { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PHBL Naturals — Admin</h1>
+  <input id="key" type="password" placeholder="Admin key" autocomplete="off" size="26">
+  <button id="load">Open</button>
+  <button id="refresh" class="ghost hide">Refresh</button>
+</header>
+
+<main>
+  <p id="error" class="err"></p>
+
+  <div id="panels" class="hide">
+    <section>
+      <h2>Overview</h2>
+      <div id="stats" class="cards"></div>
+      <p id="lowStock" class="muted"></p>
+    </section>
+
+    <section>
+      <h2>Orders</h2>
+      <div class="row">
+        <select id="statusFilter">
+          <option value="">All statuses</option>
+          <option>pending</option><option>confirmed</option><option>packed</option>
+          <option>shipped</option><option>delivered</option><option>cancelled</option>
+        </select>
+        <input id="search" placeholder="Order id, name, email or phone">
+      </div>
+      <table>
+        <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
+        <tbody id="orders"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Stock</h2>
+      <table>
+        <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+        <tbody id="products"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Messages &amp; subscribers</h2>
+      <table>
+        <thead><tr><th>Received</th><th>From</th><th>Message</th><th></th></tr></thead>
+        <tbody id="messages"></tbody>
+      </table>
+      <p id="subscribers" class="muted"></p>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const money = n => '₹' + Number(n || 0).toLocaleString('en-IN');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+let adminKey = sessionStorage.getItem('phblAdminKey') || '';
+
+async function api(path, options = {}) {
+  const res = await fetch(`/api/admin${path}`, {
+    ...options,
+    headers: {
+      'X-Admin-Key': adminKey,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...options.headers
+    }
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+const STATUSES = ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
+
+function renderStats(stats) {
+  $('stats').innerHTML = `
+    <div class="card"><b>${stats.orders.total || 0}</b><span>Orders</span></div>
+    <div class="card"><b>${stats.orders.pending || 0}</b><span>Pending</span></div>
+    <div class="card"><b>${stats.orders.shipped || 0}</b><span>Shipped</span></div>
+    <div class="card"><b>${money(stats.revenue.paidTotal)}</b><span>Paid revenue</span></div>
+    <div class="card"><b>${money(stats.revenue.last30Days)}</b><span>Last 30 days</span></div>
+    <div class="card"><b>${stats.customers.total || 0}</b><span>Customers</span></div>
+    <div class="card"><b>${stats.newsletter.total || 0}</b><span>Subscribers</span></div>
+    <div class="card"><b>${stats.messages.open || 0}</b><span>Open messages</span></div>`;
+
+  $('lowStock').textContent = stats.lowStock.length
+    ? 'Low stock: ' + stats.lowStock.map(p => `${p.name} (${p.stock})`).join(', ')
+    : 'No products are low on stock.';
+}
+
+function renderOrders(orders) {
+  $('orders').innerHTML = orders.length ? orders.map(o => `
+    <tr>
+      <td><b>${esc(o.id)}</b><div class="muted">${esc(o.placedAt)}</div></td>
+      <td>${esc(o.customer.name)}<div class="muted">${esc(o.customer.phone)}<br>${esc(o.customer.email)}</div>
+          <div class="muted">${esc(o.customer.address)}</div></td>
+      <td>${o.items.map(i => `${i.qty} × ${esc(i.name)}`).join('<br>')}</td>
+      <td>${money(o.total)}<div class="muted">${money(o.subtotal)} + ${money(o.shipping + o.codFee)}</div></td>
+      <td><span class="pill ${esc(o.paymentStatus)}">${esc(o.paymentStatus)}</span>
+          <div class="muted">${esc(o.paymentMethod)}</div>
+          ${o.paymentStatus !== 'paid' && o.paymentMethod === 'cod'
+            ? `<button class="ghost" data-paid="${esc(o.id)}">Mark paid</button>` : ''}</td>
+      <td><select data-status="${esc(o.id)}">
+            ${STATUSES.map(s => `<option ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}
+          </select></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="muted">No orders yet.</td></tr>';
+}
+
+function renderProducts(products) {
+  $('products').innerHTML = products.map(p => `
+    <tr>
+      <td>${esc(p.name)}${p.active ? '' : ' <span class="pill">inactive</span>'}
+          <div class="muted">${esc(p.size)}</div></td>
+      <td>${esc(p.category)}</td>
+      <td>${money(p.price)}</td>
+      <td><input type="number" min="0" value="${p.stock}" size="4" data-stock="${p.id}" style="width:5.5rem"></td>
+      <td><button class="ghost" data-save="${p.id}">Save</button></td>
+    </tr>`).join('');
+}
+
+function renderMessages(messages) {
+  $('messages').innerHTML = messages.length ? messages.map(m => `
+    <tr>
+      <td>${esc(m.created_at)}</td>
+      <td>${esc(m.name)}<div class="muted">${esc(m.email)}<br>${esc(m.phone)}</div></td>
+      <td>${esc(m.subject ? m.subject + ' — ' : '')}${esc(m.message)}</td>
+      <td>${m.handled ? '<span class="pill paid">handled</span>'
+        : `<button class="ghost" data-handled="${m.id}">Mark handled</button>`}</td>
+    </tr>`).join('') : '<tr><td colspan="4" class="muted">No messages yet.</td></tr>';
+}
+
+async function loadAll() {
+  $('error').textContent = '';
+  const params = new URLSearchParams();
+  if ($('statusFilter').value) params.set('status', $('statusFilter').value);
+  if ($('search').value.trim()) params.set('q', $('search').value.trim());
+
+  const [{ stats }, { orders }, { products }, { messages }, { subscribers }] = await Promise.all([
+    api('/stats'),
+    api(`/orders?${params}`),
+    api('/products'),
+    api('/messages'),
+    api('/newsletter')
+  ]);
+
+  renderStats(stats);
+  renderOrders(orders);
+  renderProducts(products);
+  renderMessages(messages);
+
+  $('subscribers').textContent = `${subscribers.filter(s => s.active).length} active newsletter subscribers.`;
+  $('panels').classList.remove('hide');
+  $('refresh').classList.remove('hide');
+}
+
+async function run(task) {
+  try {
+    await task();
+  } catch (error) {
+    $('error').textContent = error.message;
+  }
+}
+
+$('load').addEventListener('click', () => {
+  adminKey = $('key').value.trim() || adminKey;
+  sessionStorage.setItem('phblAdminKey', adminKey);
+  run(loadAll);
+});
+
+$('refresh').addEventListener('click', () => run(loadAll));
+$('statusFilter').addEventListener('change', () => run(loadAll));
+$('search').addEventListener('change', () => run(loadAll));
+
+document.addEventListener('change', event => {
+  const id = event.target.dataset.status;
+  if (!id) return;
+  run(async () => {
+    await api(`/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ status: event.target.value }) });
+    await loadAll();
+  });
+});
+
+document.addEventListener('click', event => {
+  const paid = event.target.dataset.paid;
+  const save = event.target.dataset.save;
+  const handled = event.target.dataset.handled;
+
+  if (paid) {
+    run(async () => {
+      await api(`/orders/${paid}`, { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'paid' }) });
+      await loadAll();
+    });
+  }
+  if (save) {
+    const field = document.querySelector(`[data-stock="${save}"]`);
+    run(async () => {
+      await api(`/products/${save}`, { method: 'PATCH', body: JSON.stringify({ stock: Number(field.value) }) });
+      await loadAll();
+    });
+  }
+  if (handled) {
+    run(async () => {
+      await api(`/messages/${handled}`, { method: 'PATCH', body: JSON.stringify({ handled: true }) });
+      await loadAll();
+    });
+  }
+});
+
+if (adminKey) {
+  $('key').value = adminKey;
+  run(loadAll);
+}
+</script>
+</body>
+</html>

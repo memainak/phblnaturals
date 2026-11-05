@@ -1,0 +1,403 @@
+{
+  "sections": {
+    "search": {
+      "type": "phbl-search-bar",
+      "settings": {
+        "placeholder": "Search for face wash, hair oil, combos…",
+        "chips_label": "Popular:"
+      },
+      "blocks": {
+        "b0": {
+          "type": "term",
+          "settings": {
+            "term": "Face wash"
+          }
+        },
+        "b1": {
+          "type": "term",
+          "settings": {
+            "term": "Hair oil"
+          }
+        },
+        "b2": {
+          "type": "term",
+          "settings": {
+            "term": "Aloe vera gel"
+          }
+        },
+        "b3": {
+          "type": "term",
+          "settings": {
+            "term": "Lip balm"
+          }
+        },
+        "b4": {
+          "type": "term",
+          "settings": {
+            "term": "Combos"
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1",
+        "b2",
+        "b3",
+        "b4"
+      ]
+    },
+    "hero": {
+      "type": "phbl-hero",
+      "settings": {
+        "autoplay": true,
+        "speed": 5
+      },
+      "blocks": {
+        "b0": {
+          "type": "slide",
+          "settings": {
+            "alt": "PHBL Naturals launch offer"
+          }
+        },
+        "b1": {
+          "type": "slide",
+          "settings": {
+            "alt": "Free gift above ₹999"
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1"
+      ]
+    },
+    "official": {
+      "type": "phbl-official-notice",
+      "settings": {}
+    },
+    "bestsellers": {
+      "type": "phbl-product-grid",
+      "settings": {
+        "heading": "Bestsellers",
+        "subheading": "",
+        "collection": "bestsellers",
+        "limit": 20,
+        "initial_rows": 2,
+        "cols_mobile": 2,
+        "cols_desktop": 4,
+        "show_view_all": true,
+        "bg": "#FFFFFF"
+      }
+    },
+    "new_arrivals": {
+      "type": "phbl-product-grid",
+      "settings": {
+        "heading": "New launches",
+        "subheading": "",
+        "collection": "new-launches",
+        "limit": 12,
+        "initial_rows": 1,
+        "cols_mobile": 2,
+        "cols_desktop": 4,
+        "show_view_all": true,
+        "bg": "#FFFFFF"
+      }
+    },
+    "concerns": {
+      "type": "phbl-metaobject-tiles",
+      "settings": {
+        "type": "concern",
+        "heading": "Shop by concern",
+        "layout": "grid",
+        "shape": "card",
+        "cols_mobile": 2,
+        "cols_desktop": 6,
+        "limit": 12,
+        "show_desc": true
+      }
+    },
+    "categories": {
+      "type": "phbl-category-icons",
+      "settings": {
+        "heading": "Shop by category",
+        "style": "circle"
+      },
+      "blocks": {
+        "b0": {
+          "type": "category",
+          "settings": {
+            "collection": "face-care",
+            "label": "Face"
+          }
+        },
+        "b1": {
+          "type": "category",
+          "settings": {
+            "collection": "hair-care",
+            "label": "Hair"
+          }
+        },
+        "b2": {
+          "type": "category",
+          "settings": {
+            "collection": "body-care",
+            "label": "Body"
+          }
+        },
+        "b3": {
+          "type": "category",
+          "settings": {
+            "collection": "lip-care",
+            "label": "Lips"
+          }
+        },
+        "b4": {
+          "type": "category",
+          "settings": {
+            "collection": "combos",
+            "label": "Combos"
+          }
+        },
+        "b5": {
+          "type": "category",
+          "settings": {
+            "collection": "bestsellers",
+            "label": "Bestsellers"
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ]
+    },
+    "offer_banner": {
+      "type": "phbl-promo-grid",
+      "settings": {
+        "heading": ""
+      },
+      "blocks": {
+        "b0": {
+          "type": "banner",
+          "settings": {
+            "alt": "Combo offer",
+            "link": "shopify://collections/combos"
+          }
+        },
+        "b1": {
+          "type": "banner",
+          "settings": {
+            "alt": "Free gift above ₹999",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1"
+      ]
+    },
+    "face": {
+      "type": "phbl-product-grid",
+      "settings": {
+        "heading": "Face care",
+        "subheading": "",
+        "collection": "face-care",
+        "limit": 12,
+        "initial_rows": 1,
+        "cols_mobile": 2,
+        "cols_desktop": 4,
+        "show_view_all": true,
+        "bg": "#FFFFFF"
+      }
+    },
+    "hair": {
+      "type": "phbl-product-grid",
+      "settings": {
+        "heading": "Hair care",
+        "subheading": "",
+        "collection": "hair-care",
+        "limit": 12,
+        "initial_rows": 1,
+        "cols_mobile": 2,
+        "cols_desktop": 4,
+        "show_view_all": true,
+        "bg": "#FFFFFF"
+      }
+    },
+    "all": {
+      "type": "phbl-product-grid",
+      "settings": {
+        "heading": "All products",
+        "subheading": "",
+        "collection": "all",
+        "limit": 24,
+        "initial_rows": 2,
+        "cols_mobile": 2,
+        "cols_desktop": 4,
+        "show_view_all": true,
+        "bg": "#FFFFFF"
+      }
+    },
+    "ingredients": {
+      "type": "phbl-metaobject-tiles",
+      "settings": {
+        "type": "ingredient",
+        "heading": "Shop by ingredient",
+        "layout": "scroll",
+        "shape": "circle",
+        "limit": 12
+      }
+    },
+    "trustbar": {
+      "type": "phbl-trust-bar",
+      "settings": {
+        "bg": "#2F5D3A",
+        "fg": "#FFFFFF"
+      },
+      "blocks": {
+        "b0": {
+          "type": "item",
+          "settings": {
+            "text": "Free delivery above ₹499"
+          }
+        },
+        "b1": {
+          "type": "item",
+          "settings": {
+            "text": "COD available"
+          }
+        },
+        "b2": {
+          "type": "item",
+          "settings": {
+            "text": "Easy 7-day returns"
+          }
+        },
+        "b3": {
+          "type": "item",
+          "settings": {
+            "text": "Made in our own lab"
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1",
+        "b2",
+        "b3"
+      ]
+    },
+    "reviews": {
+      "type": "phbl-reviews-marquee",
+      "settings": {
+        "heading": "What our customers say",
+        "speed": 4,
+        "bg": "#FAF7F0"
+      }
+    },
+    "promise": {
+      "type": "phbl-trust",
+      "settings": {
+        "heading": "The PHBL promise",
+        "bg": "#DDE8D5"
+      }
+    },
+    "heritage": {
+      "type": "phbl-heritage",
+      "settings": {
+        "cta_link": "shopify://pages/about"
+      },
+      "blocks": {
+        "b0": {
+          "type": "stat",
+          "settings": {
+            "number": "50+",
+            "label": "Years of natural healing"
+          }
+        },
+        "b1": {
+          "type": "stat",
+          "settings": {
+            "number": "West Bengal",
+            "label": "Made in our own lab"
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1"
+      ]
+    },
+    "reels": {
+      "type": "phbl-reels",
+      "settings": {
+        "heading": "Watch It. Love It."
+      },
+      "blocks": {
+        "b0": {
+          "type": "reel",
+          "settings": {}
+        },
+        "b1": {
+          "type": "reel",
+          "settings": {}
+        },
+        "b2": {
+          "type": "reel",
+          "settings": {}
+        },
+        "b3": {
+          "type": "reel",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1",
+        "b2",
+        "b3"
+      ]
+    },
+    "featured_in": {
+      "type": "phbl-featured-in",
+      "settings": {}
+    },
+    "instagram": {
+      "type": "apps",
+      "settings": {
+        "include_margins": true
+      }
+    },
+    "seo": {
+      "type": "phbl-seo-text",
+      "settings": {}
+    }
+  },
+  "order": [
+    "search",
+    "hero",
+    "official",
+    "bestsellers",
+    "new_arrivals",
+    "concerns",
+    "categories",
+    "offer_banner",
+    "face",
+    "hair",
+    "all",
+    "ingredients",
+    "trustbar",
+    "reviews",
+    "promise",
+    "heritage",
+    "reels",
+    "featured_in",
+    "instagram",
+    "seo"
+  ]
+}

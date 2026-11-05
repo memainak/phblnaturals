@@ -1,0 +1,17 @@
+{%- comment -%} PHBL design tokens, driven by Theme settings > PHBL: Brand {%- endcomment -%}
+{% style %}
+  :root {
+    --phbl-primary: {{ settings.phbl_primary }};
+    --phbl-primary-rgb: {{ settings.phbl_primary.red }}, {{ settings.phbl_primary.green }}, {{ settings.phbl_primary.blue }};
+    --phbl-secondary: {{ settings.phbl_secondary }};
+    --phbl-cream: {{ settings.phbl_cream }};
+    --phbl-accent: {{ settings.phbl_accent }};
+    --phbl-text: {{ settings.phbl_text }};
+    --phbl-radius: {{ settings.phbl_radius }}px;
+    --phbl-radius-pill: 999px;
+    --phbl-shadow: 0 2px 12px rgba(31, 42, 36, 0.08);
+    --phbl-shadow-hover: 0 6px 24px rgba(31, 42, 36, 0.14);
+    --phbl-gap: 1.2rem;
+    --phbl-bottom-nav-h: 6rem;
+  }
+{% endstyle %}

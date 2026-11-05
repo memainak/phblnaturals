@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /checkout.html
+Disallow: /cart.html
+Disallow: /order-confirmation.html
+
+Sitemap: https://phblnaturals.com/sitemap.xml

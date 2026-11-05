@@ -1,0 +1,38 @@
+{%- comment -%}
+  Mobile bottom navigation. Links: Home, Categories (all collections), Offers (/collections/offers or combos), Account, Cart.
+{%- endcomment -%}
+{%- assign offers_url = routes.collections_url | append: '/combos' -%}
+{%- if collections['offers'] != blank -%}{%- assign offers_url = collections['offers'].url -%}{%- endif -%}
+<nav class="phbl-bottom-nav" aria-label="{{ 'phbl.bottom_nav.label' | t }}">
+  <a href="{{ routes.root_url }}" {% if template.name == 'index' %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+    {{ 'phbl.bottom_nav.home' | t }}
+  </a>
+  <a href="{{ routes.collections_url }}" {% if template.name == 'list-collections' %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+    {{ 'phbl.bottom_nav.categories' | t }}
+  </a>
+  <a href="{{ offers_url }}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+    {{ 'phbl.bottom_nav.offers' | t }}
+  </a>
+  <a href="{{ routes.account_url }}" {% if template.name contains 'customers' %}aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    {{ 'phbl.bottom_nav.account' | t }}
+  </a>
+  <a href="{{ routes.cart_url }}" {% if template.name == 'cart' %}aria-current="page"{% endif %} data-bottom-cart>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+    <span class="phbl-count" data-cart-count {% if cart.item_count == 0 %}hidden{% endif %}>{{ cart.item_count }}</span>
+    {{ 'phbl.bottom_nav.cart' | t }}
+  </a>
+</nav>
+{%- if settings.cart_type == 'drawer' -%}
+  <script>
+    document.querySelector('[data-bottom-cart]')?.addEventListener('click', (e) => {
+      const drawer = document.querySelector('cart-drawer');
+      if (!drawer || document.body.dataset.template === 'cart') return;
+      e.preventDefault();
+      drawer.open();
+    });
+  </script>
+{%- endif -%}

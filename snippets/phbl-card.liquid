@@ -1,0 +1,138 @@
+{%- comment -%}
+  PHBL product card. Reused on home, collection, search, PDP recommendations, blog.
+  Accepts:
+  - product: {Object} Product (required)
+  - lazy: {Boolean} lazy-load image (default true)
+  - sizes: {String} image sizes attribute
+  Data:
+  - custom.badge, custom.suitable_for, custom.benefit_tagline, custom.hover_image
+  - reviews.rating / reviews.rating_count (standard metafields synced by Judge.me)
+{%- endcomment -%}
+{%- liquid
+  assign p = product
+  assign v = p.selected_or_first_available_variant
+  assign sizes = sizes | default: '(min-width: 990px) 25vw, 50vw'
+  assign loading = 'lazy'
+  if lazy == false
+    assign loading = 'eager'
+  endif
+  assign badge = p.metafields.custom.badge.value
+  assign badge_class = badge | handleize
+  assign rating = p.metafields.reviews.rating.value
+  assign rating_count = p.metafields.reviews.rating_count.value | default: 0
+  assign prepaid_pct = settings.prepaid_discount_percent | default: 0
+  assign size_option_index = nil
+  for option in p.options_with_values
+    assign oname = option.name | downcase
+    if oname == 'size' or oname == 'pack size' or oname == 'quantity'
+      assign size_option_index = forloop.index0
+    endif
+  endfor
+-%}
+<div class="phbl-card" data-product-id="{{ p.id }}">
+  <a href="{{ p.url }}" class="phbl-card__media" tabindex="-1" aria-hidden="true">
+    {%- if badge != blank -%}
+      <span class="phbl-card__badge phbl-badge phbl-badge--{{ badge_class }}">{{ badge }}</span>
+    {%- elsif p.available == false -%}
+      <span class="phbl-card__badge phbl-badge" style="background:#666">{{ 'products.product.sold_out' | t }}</span>
+    {%- endif -%}
+    {%- if p.featured_media -%}
+      {{ p.featured_media | image_url: width: 720 | image_tag: loading: loading, sizes: sizes, widths: '240,360,480,720', alt: p.featured_media.alt | default: p.title }}
+    {%- else -%}
+      {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+    {%- endif -%}
+    {%- liquid
+      assign hover = p.metafields.custom.hover_image.value
+      if hover == blank and p.media.size > 1
+        assign hover = p.media[1]
+      endif
+    -%}
+    {%- if hover != blank -%}
+      {{ hover | image_url: width: 720 | image_tag: loading: 'lazy', sizes: sizes, widths: '240,360,480,720', class: 'phbl-card__hover', alt: '' }}
+    {%- endif -%}
+  </a>
+
+  <div class="phbl-card__body">
+    {%- if p.metafields.custom.suitable_for != blank -%}
+      <span class="phbl-card__suitable">{{ p.metafields.custom.suitable_for.value }}</span>
+    {%- endif -%}
+    <h3 class="phbl-card__title"><a href="{{ p.url }}">{{ p.title | escape }}</a></h3>
+    {%- if p.metafields.custom.benefit_tagline != blank -%}
+      <p class="phbl-card__tagline">{{ p.metafields.custom.benefit_tagline.value }}</p>
+    {%- endif -%}
+    {%- if rating != blank and rating_count > 0 -%}
+      <div class="phbl-card__rating" aria-label="{{ 'phbl.card.rating_aria' | t: rating: rating.rating, count: rating_count }}">
+        <span class="star" aria-hidden="true">★</span>
+        <strong>{{ rating.rating | round: 1 }}</strong>
+        <span class="phbl-muted">({{ rating_count }})</span>
+      </div>
+    {%- endif -%}
+
+    {%- if size_option_index != nil and p.variants.size > 1 and p.variants.size <= 4 -%}
+      <div class="phbl-card__sizes" role="group" aria-label="{{ p.options_with_values[size_option_index].name }}">
+        {%- for variant in p.variants -%}
+          {%- liquid
+            assign mrp = ''
+            assign off = ''
+            if variant.compare_at_price > variant.price
+              assign mrp = variant.compare_at_price | money
+              assign pct = variant.compare_at_price | minus: variant.price | times: 100 | divided_by: variant.compare_at_price
+              assign off = 'phbl.card.percent_off' | t: percent: pct
+            endif
+            assign get_at = ''
+            if settings.show_get_at_price and prepaid_pct > 0
+              assign g = variant.price | times: prepaid_pct | divided_by: 100
+              assign g = variant.price | minus: g | money_without_trailing_zeros
+              assign get_at = 'phbl.card.get_at' | t: price: g
+            endif
+          -%}
+          {%- capture variant_json -%}
+            {"id":{{ variant.id }},"available":{{ variant.available }},"price":{{ variant.price | money | json }},"mrp":{{ mrp | json }},"off":{{ off | json }},"get_at":{{ get_at | json }}}
+          {%- endcapture -%}
+          <button
+            type="button"
+            class="phbl-pill"
+            aria-pressed="{% if variant.id == v.id %}true{% else %}false{% endif %}"
+            data-card-variant="{{ variant_json | strip | escape }}"
+            {% unless variant.available %}disabled{% endunless %}
+          >{{ variant.options[size_option_index] }}</button>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    <div class="phbl-card__footer">
+      <div class="phbl-price">
+        <span class="phbl-price__sale">{{ v.price | money }}</span>
+        <s class="phbl-price__mrp" {% unless v.compare_at_price > v.price %}hidden{% endunless %}>
+          {%- if v.compare_at_price > v.price -%}{{ v.compare_at_price | money }}{%- endif -%}
+        </s>
+        <span class="phbl-price__off" {% unless v.compare_at_price > v.price %}hidden{% endunless %}>
+          {%- if v.compare_at_price > v.price -%}
+            {%- assign pct = v.compare_at_price | minus: v.price | times: 100 | divided_by: v.compare_at_price -%}
+            {{ 'phbl.card.percent_off' | t: percent: pct }}
+          {%- endif -%}
+        </span>
+      </div>
+      {%- if settings.show_get_at_price and prepaid_pct > 0 -%}
+        {%- assign g = v.price | times: prepaid_pct | divided_by: 100 -%}
+        {%- assign g = v.price | minus: g | money_without_trailing_zeros -%}
+        <span class="phbl-get-at">{{ 'phbl.card.get_at' | t: price: g }}</span>
+      {%- endif -%}
+
+      {%- if p.available -%}
+        {%- if p.variants.size > 1 and size_option_index == nil -%}
+          <a href="{{ p.url }}" class="phbl-btn phbl-btn--sm phbl-btn--block">{{ 'phbl.card.choose_options' | t }}</a>
+        {%- else -%}
+          <button type="button" class="phbl-btn phbl-btn--sm phbl-btn--block" data-quick-add data-variant-id="{{ v.id }}">
+            {{ 'products.product.add_to_cart' | t }}
+          </button>
+        {%- endif -%}
+      {%- else -%}
+        {%- comment -%} Back-in-stock app hooks onto [data-notify-me]; falls back to PDP {%- endcomment -%}
+        <a href="{{ p.url }}#notify" class="phbl-btn phbl-btn--sm phbl-btn--outline phbl-btn--block" data-notify-me data-product-id="{{ p.id }}">
+          {{ 'phbl.card.notify_me' | t }}
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</div>

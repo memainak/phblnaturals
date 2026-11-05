@@ -1,0 +1,78 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {}
+    },
+    "heritage": {
+      "type": "phbl-heritage",
+      "settings": {
+        "cta_label": "Shop now",
+        "cta_link": "shopify://collections/all"
+      },
+      "blocks": {
+        "b0": {
+          "type": "stat",
+          "settings": {
+            "number": "50+",
+            "label": "Years"
+          }
+        },
+        "b1": {
+          "type": "stat",
+          "settings": {
+            "number": "[X]",
+            "label": "Formulations"
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1"
+      ]
+    },
+    "timeline": {
+      "type": "phbl-timeline",
+      "settings": {
+        "heading": "Our journey"
+      },
+      "blocks": {
+        "b0": {
+          "type": "milestone",
+          "settings": {
+            "year": "[Year]",
+            "title": "Purusottam Homeo Bikash Lab founded",
+            "text": "Add the founding story."
+          }
+        },
+        "b1": {
+          "type": "milestone",
+          "settings": {
+            "year": "2026",
+            "title": "PHBL Naturals launches",
+            "text": "Our natural personal-care range goes online."
+          }
+        }
+      },
+      "block_order": [
+        "b0",
+        "b1"
+      ]
+    },
+    "lab": {
+      "type": "image-with-text",
+      "settings": {}
+    },
+    "promise": {
+      "type": "phbl-trust",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main",
+    "heritage",
+    "timeline",
+    "lab",
+    "promise"
+  ]
+}

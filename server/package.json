@@ -1,0 +1,20 @@
+{
+  "name": "phbl-naturals-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Storefront server for PHBL Naturals: serves the static site and handles orders and Razorpay payments.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "logo": "node tools/install-logo.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "razorpay": "^2.9.6"
+  }
+}

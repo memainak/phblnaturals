@@ -1,0 +1,24 @@
+{%- comment -%}
+  Recently viewed. On a PDP it records the product; the list itself is fetched through
+  /search?section_id=phbl-recently-viewed so it renders the same phbl-card markup.
+{%- endcomment -%}
+{%- if search.performed -%}
+  <div data-rv-results class="phbl-scroller">
+    {%- for item in search.results -%}
+      {%- if item.object_type == 'product' -%}{%- render 'phbl-card', product: item -%}{%- endif -%}
+    {%- endfor -%}
+  </div>
+{%- else -%}
+  <phbl-recently-viewed class="phbl-section page-width" data-current="{{ product.handle }}" data-section-id="phbl-recently-viewed" hidden>
+    <div class="phbl-heading"><h2 class="h3">{{ section.settings.heading }}</h2></div>
+    <div data-rv-results></div>
+  </phbl-recently-viewed>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Recently viewed",
+  "tag": "section",
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "Recently viewed" }],
+  "presets": [{ "name": "PHBL Recently viewed" }]
+}
+{% endschema %}

@@ -1,0 +1,22 @@
+{
+  "name": "phbl-naturals-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend for the PHBL Naturals storefront: catalogue, accounts, cart, orders, payments and admin.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node src/seed.js",
+    "smoke": "node tools/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "razorpay": "^2.9.6"
+  }
+}

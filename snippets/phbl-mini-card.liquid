@@ -1,0 +1,14 @@
+{%- assign v = product.selected_or_first_available_variant -%}
+<div class="phbl-mini" data-product-id="{{ product.id }}">
+  {%- if product.featured_media -%}
+    {{ product.featured_media | image_url: width: 128 | image_tag: loading: 'lazy', width: 64, height: 64, alt: product.title }}
+  {%- endif -%}
+  <div>
+    <p class="phbl-mini__title"><a href="{{ product.url }}" style="color:inherit;text-decoration:none">{{ product.title | escape }}</a></p>
+    <div class="phbl-price">
+      <span class="phbl-price__sale" style="font-size:1.3rem">{{ v.price | money }}</span>
+      {%- if v.compare_at_price > v.price -%}<s class="phbl-price__mrp">{{ v.compare_at_price | money }}</s>{%- endif -%}
+    </div>
+  </div>
+  <button type="button" class="phbl-btn phbl-btn--sm" data-quick-add data-variant-id="{{ v.id }}" aria-label="{{ 'phbl.cart.add_aria' | t: title: product.title | escape }}">+</button>
+</div>

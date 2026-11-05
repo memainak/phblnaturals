@@ -1,0 +1,36 @@
+{%- comment -%} Items inside a combo, from custom.combo_items (list of product refs). Stock itself is linked by the Shopify Bundles app. {%- endcomment -%}
+{%- assign items = product.metafields.custom.combo_items.value -%}
+{%- if items != blank -%}
+  {%- liquid
+    assign sum = 0
+    for p in items
+      assign sum = sum | plus: p.selected_or_first_available_variant.price
+    endfor
+    assign saving = sum | minus: product.selected_or_first_available_variant.price
+    assign saving_money = saving | money_without_trailing_zeros
+  -%}
+  <div class="phbl-section page-width">
+    <div class="phbl-heading"><h2 class="h3">{{ section.settings.heading }}</h2></div>
+    <div class="phbl-grid" style="--cols-mobile: 2; --cols-desktop: 4">
+      {%- for p in items -%}
+        <a href="{{ p.url }}" class="phbl-tile phbl-tile--card">
+          <span class="phbl-tile__img">{{ p.featured_media | image_url: width: 400 | image_tag: loading: 'lazy', widths: '200,400', sizes: '(min-width: 990px) 25vw, 50vw', alt: p.title }}</span>
+          <span class="phbl-tile__label">{{ p.title }}</span>
+          <span class="phbl-muted">{{ p.metafields.custom.net_quantity.value }} · {{ p.selected_or_first_available_variant.price | money }}</span>
+        </a>
+      {%- endfor -%}
+    </div>
+    {%- if saving > 0 -%}
+      <p class="phbl-savings" style="text-align:center;margin-top:1.6rem">{{ 'phbl.combo.saving' | t: amount: saving_money }}</p>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Combo items",
+  "tag": "section",
+  "enabled_on": { "templates": ["product"] },
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "What's inside this combo" }],
+  "presets": [{ "name": "PHBL Combo items" }]
+}
+{% endschema %}

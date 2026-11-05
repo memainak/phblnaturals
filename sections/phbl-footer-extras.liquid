@@ -1,0 +1,50 @@
+{%- comment -%} Footer additions: legal links, "Also available on", trust badges, company/legal line. Sits above Dawn's footer. {%- endcomment -%}
+<div class="phbl-section" style="background: var(--phbl-cream); padding-block: 2.4rem">
+  <div class="page-width" style="display:grid;gap:2.4rem;grid-template-columns:repeat(auto-fit,minmax(22rem,1fr))">
+    <nav aria-label="{{ 'phbl.footer.help' | t }}">
+      <h2 class="h5">{{ 'phbl.footer.help' | t }}</h2>
+      <ul class="list-unstyled" style="display:grid;gap:.6rem">
+        {%- for link in section.settings.menu.links -%}<li><a href="{{ link.url }}" style="color:inherit">{{ link.title }}</a></li>{%- endfor -%}
+        {%- if section.settings.menu == blank -%}
+          {%- for policy in shop.policies -%}<li><a href="{{ policy.url }}" style="color:inherit">{{ policy.title }}</a></li>{%- endfor -%}
+        {%- endif -%}
+      </ul>
+    </nav>
+    {%- if settings.amazon_url != blank or settings.flipkart_url != blank or settings.nykaa_url != blank -%}
+      <div>
+        <h2 class="h5">{{ 'phbl.footer.also_on' | t }}</h2>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+          {%- if settings.amazon_url != blank -%}<a class="phbl-pill" href="{{ settings.amazon_url }}" target="_blank" rel="noopener">Amazon</a>{%- endif -%}
+          {%- if settings.flipkart_url != blank -%}<a class="phbl-pill" href="{{ settings.flipkart_url }}" target="_blank" rel="noopener">Flipkart</a>{%- endif -%}
+          {%- if settings.nykaa_url != blank -%}<a class="phbl-pill" href="{{ settings.nykaa_url }}" target="_blank" rel="noopener">Nykaa</a>{%- endif -%}
+        </div>
+      </div>
+    {%- endif -%}
+    <div>
+      <h2 class="h5">{{ 'phbl.footer.contact' | t }}</h2>
+      <p class="phbl-muted" style="margin:0">
+        {%- if settings.care_phone != blank -%}{{ settings.care_phone }}<br>{%- endif -%}
+        {%- if settings.care_email != blank -%}<a href="mailto:{{ settings.care_email }}">{{ settings.care_email }}</a><br>{%- endif -%}
+        {{ settings.company_address | newline_to_br }}
+        {%- if settings.gstin != blank -%}<br>GSTIN: {{ settings.gstin }}{%- endif -%}
+      </p>
+    </div>
+  </div>
+  <div class="page-width" style="margin-top:2rem">
+    <div class="phbl-icons" style="--cols-mobile: 4; --cols-desktop: 4">
+      {%- for i in (1..4) -%}
+        {%- assign tk = 'trust_' | append: i | append: '_text' -%}
+        {%- if settings[tk] != blank -%}<span class="phbl-muted" style="text-align:center">✓ {{ settings[tk] }}</span>{%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "PHBL Footer extras",
+  "tag": "section",
+  "enabled_on": { "groups": ["footer"] },
+  "settings": [{ "type": "link_list", "id": "menu", "label": "Help & legal menu", "info": "About, FAQ, Blog, Contact, Track Order, Returns, Shipping, Privacy, Terms, Grievance Officer. Empty = policy pages." }],
+  "presets": [{ "name": "PHBL Footer extras" }]
+}
+{% endschema %}

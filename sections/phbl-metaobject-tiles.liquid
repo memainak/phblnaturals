@@ -1,0 +1,48 @@
+{%- comment -%}
+  Shop by Concern / Shop by Ingredient tiles, read straight from metaobjects so new entries appear automatically.
+  concern: name, icon (file), collection (collection ref)
+  ingredient: name, image (file), short_description, collection (collection ref)
+{%- endcomment -%}
+{%- liquid
+  assign type = section.settings.type
+  assign entries = shop.metaobjects[type].values
+-%}
+{%- if entries.size > 0 -%}
+  <div class="phbl-section page-width">
+    <div class="phbl-heading"><h2 class="h3">{{ section.settings.heading }}</h2></div>
+    <div class="{% if section.settings.layout == 'scroll' %}phbl-scroller phbl-scroller--icons{% else %}phbl-grid{% endif %}" style="--cols-mobile: {{ section.settings.cols_mobile }}; --cols-desktop: {{ section.settings.cols_desktop }}">
+      {%- for entry in entries limit: section.settings.limit -%}
+        {%- assign img = entry.icon.value | default: entry.image.value -%}
+        <a class="phbl-tile{% if section.settings.shape == 'card' %} phbl-tile--card{% endif %}" href="{{ entry.collection.value.url | default: routes.all_products_collection_url }}">
+          <span class="phbl-tile__img">
+            {%- if img != blank -%}{{ img | image_url: width: 400 | image_tag: loading: 'lazy', widths: '160,240,400', sizes: '(min-width: 990px) 15vw, 40vw', alt: '' }}{%- endif -%}
+          </span>
+          <span class="phbl-tile__label">{{ entry.name.value }}</span>
+          {%- if section.settings.show_desc and entry.short_description != blank -%}<span class="phbl-muted">{{ entry.short_description.value }}</span>{%- endif -%}
+        </a>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- elsif request.design_mode -%}
+  <div class="page-width phbl-section"><p class="phbl-muted">{{ 'phbl.general.no_metaobjects' | t: type: type }}</p></div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "PHBL Metaobject tiles",
+  "tag": "section",
+  "settings": [
+    { "type": "select", "id": "type", "label": "Metaobject", "options": [{ "value": "concern", "label": "Concerns" }, { "value": "ingredient", "label": "Ingredients" }], "default": "concern" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Shop by Concern" },
+    { "type": "select", "id": "layout", "label": "Layout", "options": [{ "value": "grid", "label": "Grid" }, { "value": "scroll", "label": "Horizontal scroll" }], "default": "grid" },
+    { "type": "select", "id": "shape", "label": "Image shape", "options": [{ "value": "circle", "label": "Circle" }, { "value": "card", "label": "Rounded card" }], "default": "card" },
+    { "type": "checkbox", "id": "show_desc", "label": "Show short description", "default": false },
+    { "type": "range", "id": "limit", "label": "Max tiles", "min": 2, "max": 24, "step": 1, "default": 8 },
+    { "type": "range", "id": "cols_mobile", "label": "Columns (mobile)", "min": 2, "max": 4, "step": 1, "default": 3 },
+    { "type": "range", "id": "cols_desktop", "label": "Columns (desktop)", "min": 3, "max": 8, "step": 1, "default": 6 }
+  ],
+  "presets": [
+    { "name": "PHBL Shop by Concern", "settings": { "type": "concern", "heading": "Shop by Concern" } },
+    { "name": "PHBL Shop by Ingredient", "settings": { "type": "ingredient", "heading": "Shop by Ingredient", "shape": "circle", "layout": "scroll" } }
+  ]
+}
+{% endschema %}

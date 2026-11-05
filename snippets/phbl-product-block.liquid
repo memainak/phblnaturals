@@ -1,0 +1,226 @@
+{%- comment -%}
+  PHBL product-page blocks, added to Dawn's main-product section.
+  Accepts: block, product, section
+{%- endcomment -%}
+{%- assign v = product.selected_or_first_available_variant -%}
+{%- case block.type -%}
+  {%- when 'phbl_tagline' -%}
+    <div {{ block.shopify_attributes }}>
+      {%- if product.metafields.custom.benefit_tagline != blank -%}
+        <p style="margin:0 0 .4rem;font-size:1.5rem">{{ product.metafields.custom.benefit_tagline.value }}</p>
+      {%- endif -%}
+      {%- if product.metafields.custom.suitable_for != blank -%}
+        <span class="phbl-card__suitable">{{ 'phbl.product.suitable_for' | t }}: {{ product.metafields.custom.suitable_for.value }}</span>
+      {%- endif -%}
+    </div>
+
+  {%- when 'phbl_price_note' -%}
+    {%- liquid
+      assign pct = settings.prepaid_discount_percent | default: 0
+      assign g = v.price | times: pct | divided_by: 100
+      assign g = v.price | minus: g | money_without_trailing_zeros
+    -%}
+    <div {{ block.shopify_attributes }}>
+      <p class="phbl-muted" style="margin:0">{{ 'phbl.product.mrp_inclusive' | t }}</p>
+      {%- if settings.show_get_at_price and pct > 0 -%}
+        <p class="phbl-get-at" style="margin:.8rem 0 0">{{ 'phbl.product.best_offer' | t: price: g, percent: pct }}</p>
+      {%- endif -%}
+    </div>
+
+  {%- when 'phbl_specs' -%}
+    {%- comment -%} Spec chips strip above the title. Each chip reads real product data. {%- endcomment -%}
+    <div class="phbl-specs" {{ block.shopify_attributes }}>
+      {%- for i in (1..4) -%}
+        {%- liquid
+          assign lk = 'label_' | append: i
+          assign sk = 'source_' | append: i
+          assign label = block.settings[lk]
+          assign source = block.settings[sk]
+          assign value = ''
+          case source
+            when 'ingredient'
+              assign value = product.metafields.custom.key_ingredients.value.first.name.value
+            when 'concern'
+              assign value = product.metafields.custom.concerns.value.first.name.value
+            when 'type'
+              assign value = product.type
+            when 'suitable_for'
+              assign value = product.metafields.custom.suitable_for.value
+            when 'net_quantity'
+              assign value = product.metafields.custom.net_quantity.value
+            when 'vendor'
+              assign value = product.vendor
+          endcase
+        -%}
+        {%- if label != blank and value != blank -%}
+          <div class="phbl-spec">
+            <span class="phbl-spec__label">{{ label }}</span>
+            <span class="phbl-spec__value">{{ value }}</span>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+  {%- when 'phbl_features' -%}
+    {%- comment -%} Four short product promises: short code, title, one-line detail. {%- endcomment -%}
+    <div class="phbl-features" {{ block.shopify_attributes }}>
+      {%- for i in (1..4) -%}
+        {%- liquid
+          assign ck = 'code_' | append: i
+          assign tk = 'title_' | append: i
+          assign dk = 'detail_' | append: i
+        -%}
+        {%- if block.settings[tk] != blank -%}
+          <div class="phbl-feature">
+            <span class="phbl-feature__code">{{ block.settings[ck] }}</span>
+            <span>
+              <strong>{{ block.settings[tk] }}</strong>
+              {%- if block.settings[dk] != blank -%}<br><span class="phbl-muted">{{ block.settings[dk] }}</span>{%- endif -%}
+            </span>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+  {%- when 'phbl_social_proof' -%}
+    {%- assign bought = product.metafields.custom.bought_count.value -%}
+    {%- if bought != blank and bought > 0 -%}
+      <p class="phbl-proof" {{ block.shopify_attributes }}>
+        <span aria-hidden="true">🔥</span> {{ 'phbl.product.bought_recently' | t: count: bought, days: block.settings.days }}
+      </p>
+    {%- endif -%}
+
+  {%- when 'phbl_offer_tiers' -%}
+    {%- comment -%} Tiered offer cards. The discount itself is set up in Admin > Discounts (automatic). {%- endcomment -%}
+    <div class="phbl-tiers" {{ block.shopify_attributes }}>
+      <div class="phbl-tiers__head">
+        <strong>{{ block.settings.heading }}</strong>
+        {%- if block.settings.note != blank -%}<span class="phbl-muted">{{ block.settings.note }}</span>{%- endif -%}
+      </div>
+      <div class="phbl-tiers__grid">
+        {%- for i in (1..3) -%}
+          {%- liquid
+            assign tk = 'tier_' | append: i | append: '_title'
+            assign sk = 'tier_' | append: i | append: '_sub'
+            assign vk = 'tier_' | append: i | append: '_save'
+            assign bk = 'tier_' | append: i | append: '_badge'
+            assign lk = 'tier_' | append: i | append: '_link'
+          -%}
+          {%- if block.settings[tk] != blank -%}
+            <a class="phbl-tier" {% if block.settings[lk] != blank %}href="{{ block.settings[lk] }}"{% endif %}>
+              {%- if block.settings[bk] != blank -%}<span class="phbl-badge phbl-badge--new">{{ block.settings[bk] }}</span>{%- endif -%}
+              <strong>{{ block.settings[tk] }}</strong>
+              {%- if block.settings[sk] != blank -%}<span class="phbl-muted">{{ block.settings[sk] }}</span>{%- endif -%}
+              {%- if block.settings[vk] != blank -%}<span class="phbl-tier__save">{{ 'phbl.product.you_save' | t: amount: block.settings[vk] }}</span>{%- endif -%}
+            </a>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+
+  {%- when 'phbl_offers' -%}
+    <div class="phbl-offers" {{ block.shopify_attributes }}>
+      <strong>{{ block.settings.heading }}</strong>
+      {%- for i in (1..4) -%}
+        {%- assign tk = 'offer_' | append: i -%}
+        {%- assign ck = 'code_' | append: i -%}
+        {%- if block.settings[tk] != blank -%}
+          <div class="phbl-offer">
+            <span>{{ block.settings[tk] }}</span>
+            {%- if block.settings[ck] != blank -%}<button type="button" class="phbl-code" data-code="{{ block.settings[ck] | escape }}">{{ block.settings[ck] }}</button>{%- endif -%}
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+  {%- when 'phbl_pincode' -%}
+    <phbl-pincode {{ block.shopify_attributes }} data-endpoint="{{ block.settings.endpoint | escape }}" data-fallback="{{ block.settings.fallback | escape }}">
+      <form novalidate>
+        <label for="Pincode-{{ block.id }}"><strong>{{ 'phbl.pincode.heading' | t }}</strong></label>
+        <div class="phbl-pincode" style="margin-top:.6rem">
+          <input id="Pincode-{{ block.id }}" name="pincode" inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder="{{ 'phbl.pincode.placeholder' | t }}">
+          <button class="phbl-btn phbl-btn--outline phbl-btn--sm" type="submit">{{ 'phbl.pincode.check' | t }}</button>
+        </div>
+        <p class="phbl-pincode__result" data-result role="status"></p>
+      </form>
+    </phbl-pincode>
+
+  {%- when 'phbl_buy_now' -%}
+    {%- if product.available -%}
+      <button type="button" class="phbl-btn phbl-btn--accent phbl-btn--block" data-buy-now="product-form-{{ section.id }}" {{ block.shopify_attributes }}>
+        {{ 'phbl.product.buy_now' | t }}
+      </button>
+    {%- endif -%}
+
+  {%- when 'phbl_benefits' -%}
+    {%- assign benefits = product.metafields.custom.key_benefits.value -%}
+    {%- if benefits != blank -%}
+      <div class="phbl-icons" style="--cols-mobile: 3; --cols-desktop: 3; margin: 1.6rem 0" {{ block.shopify_attributes }}>
+        {%- for b in benefits -%}
+          <div class="phbl-icon">
+            {%- if b.icon != blank -%}{{ b.icon.value | image_url: width: 112 | image_tag: loading: 'lazy', alt: '' }}{%- endif -%}
+            <span>{{ b.title.value }}</span>
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+  {%- when 'phbl_accordions' -%}
+    {%- liquid
+      assign m = product.metafields.custom
+    -%}
+    <div {{ block.shopify_attributes }}>
+      {%- if product.description != blank -%}
+        <details class="phbl-acc" open><summary>{{ 'phbl.product.description' | t }}</summary><div class="phbl-acc__body rte">{{ product.description }}</div></details>
+      {%- endif -%}
+      {%- if m.key_ingredients != blank -%}
+        <details class="phbl-acc"><summary>{{ 'phbl.product.key_ingredients' | t }}</summary>
+          <div class="phbl-acc__body" style="display:grid;gap:1.2rem">
+            {%- for ing in m.key_ingredients.value -%}
+              <div style="display:grid;grid-template-columns:6.4rem 1fr;gap:1.2rem;align-items:center">
+                {%- if ing.image != blank -%}{{ ing.image.value | image_url: width: 128 | image_tag: loading: 'lazy', alt: ing.name.value, style: 'width:6.4rem;height:6.4rem;object-fit:cover;border-radius:50%' }}{%- else -%}<span></span>{%- endif -%}
+                <div>
+                  {%- if ing.collection != blank -%}<a href="{{ ing.collection.value.url }}"><strong>{{ ing.name.value }}</strong></a>{%- else -%}<strong>{{ ing.name.value }}</strong>{%- endif -%}
+                  <p class="phbl-muted" style="margin:.2rem 0 0">{{ ing.short_description.value }}</p>
+                </div>
+              </div>
+            {%- endfor -%}
+          </div>
+        </details>
+      {%- endif -%}
+      {%- if m.how_to_use != blank -%}
+        <details class="phbl-acc"><summary>{{ 'phbl.product.how_to_use' | t }}</summary><div class="phbl-acc__body rte">{{ m.how_to_use | metafield_tag }}</div></details>
+      {%- endif -%}
+      {%- if m.full_ingredients != blank -%}
+        <details class="phbl-acc"><summary>{{ 'phbl.product.full_ingredients' | t }}</summary><div class="phbl-acc__body">{{ m.full_ingredients.value | newline_to_br }}</div></details>
+      {%- endif -%}
+      {%- if m.suitable_for != blank -%}
+        <details class="phbl-acc"><summary>{{ 'phbl.product.suitable_for' | t }}</summary><div class="phbl-acc__body">{{ m.suitable_for.value }}</div></details>
+      {%- endif -%}
+      {%- if m.faqs != blank -%}
+        <details class="phbl-acc"><summary>{{ 'phbl.product.faqs' | t }}</summary>
+          <div class="phbl-acc__body">
+            {%- for f in m.faqs.value -%}
+              <p style="margin:0 0 .4rem"><strong>{{ f.question.value }}</strong></p>
+              <div class="rte phbl-muted" style="margin-bottom:1.2rem">{{ f.answer | metafield_tag }}</div>
+            {%- endfor -%}
+          </div>
+        </details>
+      {%- endif -%}
+      <details class="phbl-acc"><summary>{{ 'phbl.product.legal' | t }}</summary>
+        <dl class="phbl-acc__body phbl-legal">
+          {%- if m.net_quantity != blank -%}<dt>{{ 'phbl.legal.net_quantity' | t }}</dt><dd>{{ m.net_quantity.value }}</dd>{%- endif -%}
+          <dt>{{ 'phbl.legal.mrp' | t }}</dt><dd>{{ v.compare_at_price | default: v.price | money }} {{ 'phbl.legal.inclusive' | t }}</dd>
+          {%- if m.manufacturer != blank -%}<dt>{{ 'phbl.legal.manufacturer' | t }}</dt><dd>{{ m.manufacturer.value | newline_to_br }}</dd>{%- endif -%}
+          {%- if m.marketed_by != blank -%}<dt>{{ 'phbl.legal.marketed_by' | t }}</dt><dd>{{ m.marketed_by.value | newline_to_br }}</dd>{%- endif -%}
+          <dt>{{ 'phbl.legal.origin' | t }}</dt><dd>{{ m.country_of_origin.value | default: 'India' }}</dd>
+          {%- if m.licence_no != blank -%}<dt>{{ 'phbl.legal.licence' | t }}</dt><dd>{{ m.licence_no.value }}</dd>{%- endif -%}
+          {%- if settings.care_phone != blank or settings.care_email != blank -%}<dt>{{ 'phbl.legal.care' | t }}</dt><dd>{{ settings.care_phone }} {{ settings.care_email }}</dd>{%- endif -%}
+          {%- if settings.gstin != blank -%}<dt>GSTIN</dt><dd>{{ settings.gstin }}</dd>{%- endif -%}
+        </dl>
+        {%- if product.tags contains 'ayush' -%}
+          <p class="phbl-muted">{{ 'phbl.legal.ayush_disclaimer' | t }}</p>
+        {%- endif -%}
+      </details>
+    </div>
+{%- endcase -%}

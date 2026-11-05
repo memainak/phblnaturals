@@ -1,0 +1,33 @@
+{%- comment -%} "You're on the official site" notice: guards against lookalike domains. Text is editable. {%- endcomment -%}
+<div class="phbl-section page-width" style="padding-block:1.6rem">
+  <div class="phbl-notice">
+    <p class="phbl-notice__eyebrow">{{ section.settings.eyebrow }}</p>
+    <h2 class="h5" style="margin:.4rem 0 .8rem">{{ section.settings.heading }}</h2>
+    <div class="rte phbl-muted">{{ section.settings.text }}</div>
+    <div class="phbl-notice__rows">
+      {%- if section.settings.good_domain != blank -%}
+        <p class="phbl-notice__row phbl-notice__row--good"><span aria-hidden="true">✓</span> <span>{{ section.settings.good_label }}<strong>{{ section.settings.good_domain }}</strong></span></p>
+      {%- endif -%}
+      {%- for block in section.blocks -%}
+        <p class="phbl-notice__row phbl-notice__row--bad" {{ block.shopify_attributes }}><span aria-hidden="true">×</span> <span>{{ section.settings.bad_label }}<strong>{{ block.settings.domain }}</strong></span></p>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "PHBL Official notice",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "OFFICIAL PHBL NATURALS WEBSITE" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "You're on the official PHBL Naturals website" },
+    { "type": "richtext", "id": "text", "label": "Text", "default": "<p>You're shopping on phblnaturals.com, our only official store. Please check the web address before you order.</p>" },
+    { "type": "text", "id": "good_label", "label": "Correct-site label", "default": "Correct website: " },
+    { "type": "text", "id": "good_domain", "label": "Your domain", "default": "phblnaturals.com" },
+    { "type": "text", "id": "bad_label", "label": "Lookalike label", "default": "Not affiliated with us: " }
+  ],
+  "blocks": [{ "type": "lookalike", "name": "Lookalike domain", "settings": [{ "type": "text", "id": "domain", "label": "Domain" }] }],
+  "max_blocks": 5,
+  "presets": [{ "name": "PHBL Official notice" }]
+}
+{% endschema %}

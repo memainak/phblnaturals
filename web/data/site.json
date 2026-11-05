@@ -1,0 +1,302 @@
+{
+  "brand": {
+    "name": "PHBL Naturals",
+    "parent": "Purusottam Homeo Bikash Lab (Bonded)",
+    "tagline": "Rooted in 50+ years of natural healing",
+    "domain": "https://phblnaturals.com",
+    "logoText": "PHBL",
+    "logoSub": "NATURALS",
+    "legalName": "Dr. Trinath's PHBL Naturals",
+    "logo": "assets/img/logo.jpg",
+    "logoFooter": "assets/img/logo.jpg",
+    "logoAlt": "Dr. Trinath's PHBL Naturals",
+    "logoHeight": 48,
+    "logoFooterOnChip": true,
+    "logoShowText": true
+  },
+  "contact": {
+    "whatsapp": "91XXXXXXXXXX",
+    "whatsappMessage": "Hi PHBL Naturals, I need help with a product.",
+    "phone": "+91 XXXXX XXXXX",
+    "email": "care@phblnaturals.com",
+    "address": "Purusottam Homeo Bikash Lab (Bonded),\n[Street], [City], West Bengal [PIN], India",
+    "gstin": "[GSTIN]",
+    "hours": "Mon–Sat, 10am–6pm IST"
+  },
+  "grievance": {
+    "name": "[Officer name]",
+    "email": "grievance@phblnaturals.com",
+    "phone": "+91 XXXXX XXXXX"
+  },
+  "commerce": {
+    "currency": "INR",
+    "currencySymbol": "₹",
+    "freeShippingThreshold": 499,
+    "freeGiftThreshold": 999,
+    "freeGiftLabel": "Free travel-size gift",
+    "shippingFee": 59,
+    "codFee": 0,
+    "codEnabled": true,
+    "prepaidDiscountPercent": 5,
+    "showGetAtPrice": true,
+    "gstNote": "MRP inclusive of all taxes",
+    "deliveryEta": "3–7 working days"
+  },
+  "offers": [
+    {
+      "text": "Free gift on orders above ₹999",
+      "code": "",
+      "link": "/shop.html"
+    },
+    {
+      "text": "Extra 5% off on prepaid orders",
+      "code": "",
+      "link": "/shop.html"
+    },
+    {
+      "text": "Flat 15% off on combos",
+      "code": "COMBO15",
+      "link": "/shop.html?c=combos"
+    }
+  ],
+  "coupons": [
+    {
+      "code": "WELCOME10",
+      "type": "percent",
+      "value": 10,
+      "minCart": 499,
+      "label": "10% off your first order",
+      "firstOrderOnly": true
+    },
+    {
+      "code": "COMBO15",
+      "type": "percent",
+      "value": 15,
+      "minCart": 0,
+      "label": "15% off combos",
+      "appliesToTag": "combo"
+    }
+  ],
+  "trustBadges": [
+    {
+      "icon": "leaf",
+      "text": "Natural Ingredients"
+    },
+    {
+      "icon": "flask",
+      "text": "Made in our own lab"
+    },
+    {
+      "icon": "rabbit",
+      "text": "Cruelty Free"
+    },
+    {
+      "icon": "truck",
+      "text": "Free delivery above ₹499"
+    }
+  ],
+  "social": {
+    "instagram": "",
+    "facebook": "",
+    "youtube": ""
+  },
+  "marketplaces": {
+    "amazon": "",
+    "flipkart": "",
+    "nykaa": ""
+  },
+  "categories": [
+    {
+      "handle": "face-care",
+      "title": "Face",
+      "icon": "face"
+    },
+    {
+      "handle": "hair-care",
+      "title": "Hair",
+      "icon": "hair"
+    },
+    {
+      "handle": "body-care",
+      "title": "Body",
+      "icon": "body"
+    },
+    {
+      "handle": "lip-care",
+      "title": "Lips",
+      "icon": "lips"
+    },
+    {
+      "handle": "combos",
+      "title": "Combos",
+      "icon": "combo"
+    },
+    {
+      "handle": "all",
+      "title": "All",
+      "icon": "all"
+    }
+  ],
+  "concerns": [
+    {
+      "handle": "acne",
+      "title": "Acne & Oil Control",
+      "blurb": "Clarify and balance oily skin"
+    },
+    {
+      "handle": "dryness",
+      "title": "Dryness",
+      "blurb": "Deep, lasting moisture"
+    },
+    {
+      "handle": "dullness",
+      "title": "Dull Skin",
+      "blurb": "Bring back natural radiance"
+    },
+    {
+      "handle": "hair-fall",
+      "title": "Hair Fall",
+      "blurb": "Strengthen roots and lengths"
+    },
+    {
+      "handle": "dandruff",
+      "title": "Dandruff",
+      "blurb": "Soothe and clarify the scalp"
+    },
+    {
+      "handle": "sensitive",
+      "title": "Sensitive Skin",
+      "blurb": "Gentle, fragrance-light care"
+    }
+  ],
+  "ingredients": [
+    {
+      "handle": "neem",
+      "title": "Neem",
+      "blurb": "Clarifies and purifies oily skin"
+    },
+    {
+      "handle": "aloe-vera",
+      "title": "Aloe Vera",
+      "blurb": "Soothes and hydrates"
+    },
+    {
+      "handle": "turmeric",
+      "title": "Turmeric",
+      "blurb": "Evens out the look of dull skin"
+    },
+    {
+      "handle": "bhringraj",
+      "title": "Bhringraj",
+      "blurb": "Traditional hair-nourishing herb"
+    },
+    {
+      "handle": "hibiscus",
+      "title": "Hibiscus",
+      "blurb": "Softens and conditions hair"
+    },
+    {
+      "handle": "sandalwood",
+      "title": "Sandalwood",
+      "blurb": "Calming, classic fragrance"
+    },
+    {
+      "handle": "shea",
+      "title": "Shea Butter",
+      "blurb": "Rich butter for dry skin"
+    },
+    {
+      "handle": "beetroot",
+      "title": "Beetroot",
+      "blurb": "Natural tint for lips"
+    }
+  ],
+  "testimonials": [
+    {
+      "name": "[Customer name]",
+      "city": "Kolkata",
+      "quote": "Replace with a real review once you have consent to publish it.",
+      "product": "neem-tulsi-face-wash",
+      "rating": 5
+    },
+    {
+      "name": "[Customer name]",
+      "city": "Durgapur",
+      "quote": "Replace with a real review once you have consent to publish it.",
+      "product": "bhringraj-hair-oil",
+      "rating": 5
+    },
+    {
+      "name": "[Customer name]",
+      "city": "Siliguri",
+      "quote": "Replace with a real review once you have consent to publish it.",
+      "product": "aloe-vera-gel",
+      "rating": 4
+    }
+  ],
+  "faqs": [
+    {
+      "category": "Orders",
+      "q": "How long does delivery take?",
+      "a": "Orders are dispatched within 24–48 hours and usually arrive in 3–7 working days, depending on your pincode."
+    },
+    {
+      "category": "Orders",
+      "q": "Do you offer Cash on Delivery?",
+      "a": "Yes, COD is available on most pincodes. Prepaid orders get an extra 5% off at checkout."
+    },
+    {
+      "category": "Orders",
+      "q": "How do I track my order?",
+      "a": "You get a tracking link by SMS, email and WhatsApp once your parcel is picked up. You can also use the Track Order page."
+    },
+    {
+      "category": "Products",
+      "q": "Are your products suitable for sensitive skin?",
+      "a": "Most are formulated to be gentle. Check the 'Suitable for' line on each product and patch-test on your inner arm before first use."
+    },
+    {
+      "category": "Products",
+      "q": "Are the products tested on animals?",
+      "a": "No. We do not test our cosmetic products on animals."
+    },
+    {
+      "category": "Products",
+      "q": "Where are the products made?",
+      "a": "They are formulated and manufactured at Purusottam Homeo Bikash Lab in West Bengal, India."
+    },
+    {
+      "category": "Returns",
+      "q": "What is your return policy?",
+      "a": "Unopened products can be returned within 7 days of delivery. Opened or used products cannot be returned for hygiene reasons unless they arrived damaged."
+    },
+    {
+      "category": "Returns",
+      "q": "My order arrived damaged. What do I do?",
+      "a": "Send us photos of the parcel and product on WhatsApp within 48 hours of delivery and we will replace it or refund you."
+    }
+  ],
+  "heritage": {
+    "eyebrow": "From Purusottam Homeo Bikash Lab",
+    "heading": "Rooted in 50+ years of natural healing",
+    "body": "Replace this with the real story of the lab: when it was founded, who founded it, what it stands for, and how that knowledge shapes every PHBL Naturals formula.",
+    "stats": [
+      {
+        "number": "50+",
+        "label": "Years of natural healing"
+      },
+      {
+        "number": "West Bengal",
+        "label": "Made in our own lab"
+      },
+      {
+        "number": "15",
+        "label": "Products at launch"
+      }
+    ]
+  },
+  "seoText": {
+    "heading": "Natural skin, hair & body care by PHBL Naturals",
+    "body": "Replace this with 200–400 words about the brand, the range and key ingredients, written for search engines and real readers. Keep every claim cosmetic: cleanse, nourish, moisturise, reduce the appearance of. Do not claim to cure or treat anything."
+  }
+}

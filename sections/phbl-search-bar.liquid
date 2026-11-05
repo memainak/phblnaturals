@@ -1,0 +1,33 @@
+{%- comment -%} Search field with rotating suggestion chips. Chips link straight to search results. {%- endcomment -%}
+<div class="phbl-section page-width" style="padding-block:1.6rem">
+  <form action="{{ routes.search_url }}" method="get" role="search" class="phbl-searchbar">
+    <input type="hidden" name="type" value="product">
+    <label class="visually-hidden" for="PhblSearch-{{ section.id }}">{{ 'general.search.search' | t }}</label>
+    <span class="phbl-searchbar__field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="PhblSearch-{{ section.id }}" type="search" name="q" placeholder="{{ section.settings.placeholder | escape }}" autocomplete="off">
+    </span>
+    <button type="submit" class="phbl-btn phbl-btn--sm">{{ 'general.search.search' | t }}</button>
+  </form>
+  {%- if section.blocks.size > 0 -%}
+    <div class="phbl-searchbar__chips">
+      {%- if section.settings.chips_label != blank -%}<span class="phbl-muted">{{ section.settings.chips_label }}</span>{%- endif -%}
+      {%- for block in section.blocks -%}
+        <a class="phbl-pill" href="{{ routes.search_url }}?q={{ block.settings.term | url_encode }}&type=product" {{ block.shopify_attributes }}>{{ block.settings.term }}</a>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</div>
+{% schema %}
+{
+  "name": "PHBL Search bar",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "placeholder", "label": "Placeholder", "default": "Search for face wash, hair oil, combos…" },
+    { "type": "text", "id": "chips_label", "label": "Label before chips", "default": "Popular:" }
+  ],
+  "blocks": [{ "type": "term", "name": "Suggested search", "settings": [{ "type": "text", "id": "term", "label": "Search term", "default": "Face wash" }] }],
+  "max_blocks": 10,
+  "presets": [{ "name": "PHBL Search bar", "blocks": [{ "type": "term" }, { "type": "term" }, { "type": "term" }] }]
+}
+{% endschema %}

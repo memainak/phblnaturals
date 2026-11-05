@@ -1,0 +1,63 @@
+{%- comment -%}
+  Product grid with "See more": shows the first N rows, the rest expand in place.
+  Used for Bestsellers, New Launches, category grids and All Products on the home page.
+{%- endcomment -%}
+{%- liquid
+  assign c = section.settings.collection
+  assign per_row_d = section.settings.cols_desktop | plus: 0
+  assign initial = section.settings.initial_rows | times: per_row_d
+  assign total = section.settings.limit
+-%}
+<div class="phbl-section page-width" style="background: {{ section.settings.bg }}">
+  <div class="phbl-heading">
+    <h2 class="h4" style="letter-spacing:.06em;text-transform:uppercase">{{ section.settings.heading }}</h2>
+    {%- if section.settings.show_view_all and c != blank -%}
+      <a href="{{ c.url }}">{{ 'phbl.general.view_all' | t }}</a>
+    {%- endif -%}
+  </div>
+  {%- if section.settings.subheading != blank -%}
+    <p class="phbl-muted" style="margin:-1rem 0 1.6rem">{{ section.settings.subheading }}</p>
+  {%- endif -%}
+
+  <phbl-see-more>
+    <div class="phbl-grid" style="--cols-mobile: {{ section.settings.cols_mobile }}; --cols-desktop: {{ per_row_d }}">
+      {%- if c != blank -%}
+        {%- for product in c.products limit: total -%}
+          <div{% if forloop.index > initial %} data-extra hidden{% endif %}>
+            {%- render 'phbl-card', product: product, lazy: true -%}
+          </div>
+        {%- endfor -%}
+      {%- else -%}
+        {%- for i in (1..4) -%}
+          <div class="phbl-card">
+            <div class="phbl-card__media">{{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}</div>
+            <div class="phbl-card__body"><p class="phbl-muted">{{ 'phbl.general.pick_collection' | t }}</p></div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+    {%- if c != blank and c.products.size > initial -%}
+      <div style="display:flex;justify-content:center;margin-top:1.6rem">
+        <button type="button" class="phbl-btn phbl-btn--outline" data-see-more>+ {{ 'phbl.general.see_more' | t }}</button>
+      </div>
+    {%- endif -%}
+  </phbl-see-more>
+</div>
+{% schema %}
+{
+  "name": "PHBL Product grid",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Bestsellers" },
+    { "type": "text", "id": "subheading", "label": "Subheading (optional)" },
+    { "type": "collection", "id": "collection", "label": "Collection" },
+    { "type": "checkbox", "id": "show_view_all", "label": "Show 'View all'", "default": true },
+    { "type": "range", "id": "limit", "label": "Products to load", "min": 4, "max": 48, "step": 2, "default": 20 },
+    { "type": "range", "id": "initial_rows", "label": "Rows shown before 'See more'", "min": 1, "max": 6, "step": 1, "default": 2 },
+    { "type": "range", "id": "cols_mobile", "label": "Columns (mobile)", "min": 1, "max": 3, "step": 1, "default": 2 },
+    { "type": "range", "id": "cols_desktop", "label": "Columns (desktop)", "min": 2, "max": 6, "step": 1, "default": 4 },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "PHBL Product grid" }]
+}
+{% endschema %}

@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {}
+    },
+    "officer": {
+      "type": "phbl-grievance",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main",
+    "officer"
+  ]
+}

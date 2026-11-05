@@ -1,0 +1,22 @@
+<div class="phbl-section page-width">
+  <div class="phbl-heading"><h2 class="h3">{{ section.settings.heading }}</h2></div>
+  <ol style="list-style:none;margin:0;padding:0 0 0 2rem;border-left:2px solid var(--phbl-secondary);display:grid;gap:2.4rem">
+    {%- for block in section.blocks -%}
+      <li {{ block.shopify_attributes }} style="position:relative">
+        <span style="position:absolute;left:-2.9rem;top:.4rem;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--phbl-primary)"></span>
+        <strong style="color:var(--phbl-primary)">{{ block.settings.year }}</strong>
+        <h3 class="h5" style="margin:.2rem 0">{{ block.settings.title }}</h3>
+        <p class="phbl-muted" style="margin:0">{{ block.settings.text }}</p>
+      </li>
+    {%- endfor -%}
+  </ol>
+</div>
+{% schema %}
+{
+  "name": "PHBL Timeline",
+  "tag": "section",
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "Our journey" }],
+  "blocks": [{ "type": "milestone", "name": "Milestone", "settings": [{ "type": "text", "id": "year", "label": "Year" }, { "type": "text", "id": "title", "label": "Title" }, { "type": "textarea", "id": "text", "label": "Text" }] }],
+  "presets": [{ "name": "PHBL Timeline", "blocks": [{ "type": "milestone" }, { "type": "milestone" }] }]
+}
+{% endschema %}
