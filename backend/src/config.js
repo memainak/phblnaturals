@@ -1,10 +1,28 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, '..');
+
+/**
+ * Local configuration lives in `.env.local`, not `.env`.
+ *
+ * This folder is the Cloud Functions source directory, and firebase-functions
+ * treats a `.env` here as the deployed environment: it would ship local values
+ * — NODE_ENV=development, a dev SESSION_SECRET, a FIRESTORE_EMULATOR_HOST
+ * pointing at a machine that does not exist — straight to production, where
+ * they would override Secret Manager. `.env.local` is only ever applied to the
+ * emulators, so it cannot leak that way.
+ *
+ * `.env` is still read if one exists, for anyone who made it by hand, but
+ * `.env.local` wins and `firebase deploy` will refuse while a `.env` is here.
+ */
+dotenv.config({
+  path: [path.join(ROOT, '.env.local'), path.join(ROOT, '.env')],
+  quiet: true
+});
 
 const num = (value, fallback) => {
   const n = Number(value);

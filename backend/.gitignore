@@ -1,6 +1,9 @@
 node_modules/
+# .env would be deployed by Cloud Functions as production config; local
+# settings belong in .env.local
 .env
-.env.*.local
+.env.*
+!.env.example
 data/
 *.log
 .DS_Store

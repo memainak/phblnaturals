@@ -29,7 +29,7 @@ Then the server in another:
 ```bash
 cd backend
 npm install
-cp .env.example .env     # then fill in SESSION_SECRET and ADMIN_KEY
+cp .env.example .env.local   # then fill in SESSION_SECRET and ADMIN_KEY
 npm run dev
 ```
 
