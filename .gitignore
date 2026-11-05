@@ -4,3 +4,6 @@ node_modules/
 
 # Local archive of the storefront; the sources live in frontend/
 phbl_naturals_website_final.zip
+
+# Build output and local deps
+dist/

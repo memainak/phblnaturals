@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import express from 'express';
 import Razorpay from 'razorpay';
 import { config, razorpayEnabled } from '../config.js';
-import { db } from '../db.js';
+import { one } from '../db.js';
 import { rateLimit } from '../middleware.js';
 import {
   attachRazorpayOrder,
@@ -44,7 +44,7 @@ paymentsRouter.get('/config', (_req, res) => {
 paymentsRouter.post('/razorpay/order', rateLimit(20, 60_000), async (req, res) => {
   requireRazorpay();
 
-  const row = findOrder(req.body?.orderId);
+  const row = await findOrder(req.body?.orderId);
   if (!row) throw notFound('No order was found with that id.');
   if (row.payment_status === 'paid') throw bad('That order has already been paid.');
   if (row.status === 'cancelled') throw bad('That order was cancelled.');
@@ -57,7 +57,7 @@ paymentsRouter.post('/razorpay/order', rateLimit(20, 60_000), async (req, res) =
     notes: { orderId: row.id, customer: row.customer_name }
   });
 
-  attachRazorpayOrder(row.id, rzpOrder.id);
+  await attachRazorpayOrder(row.id, rzpOrder.id);
 
   res.json({
     ok: true,
@@ -75,7 +75,7 @@ paymentsRouter.post('/razorpay/order', rateLimit(20, 60_000), async (req, res) =
  * Called from the browser after Razorpay Checkout succeeds. The signature is
  * the proof; the webhook is the backstop if the browser never comes back.
  */
-paymentsRouter.post('/razorpay/verify', rateLimit(20, 60_000), (req, res) => {
+paymentsRouter.post('/razorpay/verify', rateLimit(20, 60_000), async (req, res) => {
   requireRazorpay();
 
   const razorpayOrderId = str(req.body?.razorpay_order_id ?? req.body?.razorpayOrderId, 64);
@@ -95,15 +95,15 @@ paymentsRouter.post('/razorpay/verify', rateLimit(20, 60_000), (req, res) => {
     expected.length === signature.length &&
     crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 
-  const row = db.prepare('SELECT * FROM orders WHERE razorpay_order_id = ?').get(razorpayOrderId);
+  const row = await one('SELECT * FROM orders WHERE razorpay_order_id = $1', [razorpayOrderId]);
   if (!row) throw notFound('That payment does not match a known order.');
 
   if (!valid) {
-    markPaymentFailed(row.id, razorpayPaymentId);
+    await markPaymentFailed(row.id, razorpayPaymentId);
     throw new HttpError(400, 'Payment signature verification failed. The order was not marked as paid.');
   }
 
-  res.json({ ok: true, order: markPaid(row.id, razorpayPaymentId) });
+  res.json({ ok: true, order: await markPaid(row.id, razorpayPaymentId) });
 });
 
 /**
@@ -111,7 +111,7 @@ paymentsRouter.post('/razorpay/verify', rateLimit(20, 60_000), (req, res) => {
  * Mounted with a raw body parser in server.js so the signature can be checked
  * against the exact bytes Razorpay sent.
  */
-export function razorpayWebhook(req, res) {
+export async function razorpayWebhook(req, res) {
   const secret = config.razorpay.webhookSecret;
   if (!secret) return res.status(503).json({ ok: false, error: 'Webhook secret is not configured.' });
 
@@ -135,15 +135,15 @@ export function razorpayWebhook(req, res) {
   const payment = event?.payload?.payment?.entity;
   const ourOrderId = payment?.notes?.orderId;
   const row = ourOrderId
-    ? findOrder(ourOrderId)
+    ? await findOrder(ourOrderId)
     : payment?.order_id
-      ? db.prepare('SELECT * FROM orders WHERE razorpay_order_id = ?').get(payment.order_id)
+      ? await one('SELECT * FROM orders WHERE razorpay_order_id = $1', [payment.order_id])
       : null;
 
   if (row) {
     try {
-      if (event.event === 'payment.captured') markPaid(row.id, payment.id);
-      else if (event.event === 'payment.failed') markPaymentFailed(row.id, payment.id);
+      if (event.event === 'payment.captured') await markPaid(row.id, payment.id);
+      else if (event.event === 'payment.failed') await markPaymentFailed(row.id, payment.id);
     } catch (error) {
       console.error('[webhook] could not apply event', event.event, error);
     }
@@ -156,8 +156,8 @@ export function razorpayWebhook(req, res) {
 }
 
 /** Lets the browser poll after a redirect-based payment. */
-paymentsRouter.get('/status/:orderId', rateLimit(60, 60_000), (req, res) => {
-  const row = findOrder(req.params.orderId);
+paymentsRouter.get('/status/:orderId', rateLimit(60, 60_000), async (req, res) => {
+  const row = await findOrder(req.params.orderId);
   if (!row) throw notFound('No order was found with that id.');
 
   res.json({
@@ -165,6 +165,9 @@ paymentsRouter.get('/status/:orderId', rateLimit(60, 60_000), (req, res) => {
     orderId: row.id,
     status: row.status,
     paymentStatus: row.payment_status,
-    order: row.payment_status === 'paid' ? shapeOrder(row, { includeContact: false }) : undefined
+    order:
+      row.payment_status === 'paid'
+        ? await shapeOrder(row, { includeContact: false })
+        : undefined
   });
 });

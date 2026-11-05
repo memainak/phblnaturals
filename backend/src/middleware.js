@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { db } from './db.js';
+import { one } from './db.js';
 import { HttpError, safeEqual, sha256 } from './util.js';
 
 export const SESSION_COOKIE = 'phbl_session';
@@ -89,28 +89,32 @@ export function parseCookies(req, _res, next) {
 
 /* ------------------------------------------------------------------- auth */
 
-const findSession = db.prepare(`
-  SELECT s.token_hash, s.expires_at, u.id, u.name, u.email, u.phone, u.role
+const SESSION_SQL = `
+  SELECT s.token_hash, u.id, u.name, u.email, u.phone, u.role
   FROM sessions s
   JOIN users u ON u.id = s.user_id
-  WHERE s.token_hash = ? AND s.expires_at > datetime('now')
-`);
+  WHERE s.token_hash = $1 AND s.expires_at > now()
+`;
 
 /** Populates req.user when a valid session cookie is present. Never rejects. */
-export function attachUser(req, _res, next) {
+export async function attachUser(req, _res, next) {
   const token = req.cookies?.[SESSION_COOKIE];
   if (!token) return next();
 
-  const row = findSession.get(sha256(token));
-  if (row) {
-    req.user = {
-      id: row.id,
-      name: row.name,
-      email: row.email,
-      phone: row.phone,
-      role: row.role
-    };
-    req.sessionTokenHash = row.token_hash;
+  try {
+    const row = await one(SESSION_SQL, [sha256(token)]);
+    if (row) {
+      req.user = {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        phone: row.phone,
+        role: row.role
+      };
+      req.sessionTokenHash = row.token_hash;
+    }
+  } catch (error) {
+    return next(error);
   }
   return next();
 }
@@ -145,7 +149,7 @@ export function setSessionCookie(res, token, expiresAt) {
     sameSite: 'lax',
     secure: config.env === 'production',
     path: '/',
-    expires: new Date(`${expiresAt.replace(' ', 'T')}Z`)
+    expires: expiresAt instanceof Date ? expiresAt : new Date(expiresAt)
   });
 }
 

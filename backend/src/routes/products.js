@@ -18,13 +18,13 @@ const SORTS = {
 };
 
 /** GET /api/products?category=Hair Care&q=oil&sort=low&limit=50 */
-productsRouter.get('/', (req, res) => {
+productsRouter.get('/', async (req, res) => {
   const category = str(req.query.category, 60);
   const q = str(req.query.q ?? req.query.search, 80).toLowerCase();
   const sort = SORTS[str(req.query.sort, 20)] ? str(req.query.sort, 20) : 'featured';
   const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 200);
 
-  let items = listProducts();
+  let items = await listProducts();
 
   if (category && category.toLowerCase() !== 'all') {
     items = items.filter(p => p.category.toLowerCase() === category.toLowerCase());
@@ -42,24 +42,24 @@ productsRouter.get('/', (req, res) => {
     ok: true,
     total,
     count: Math.min(total, limit),
-    categories: listCategories(),
+    categories: await listCategories(),
     products: items.slice(0, limit)
   });
 });
 
-productsRouter.get('/categories', (_req, res) => {
-  res.json({ ok: true, categories: listCategories() });
+productsRouter.get('/categories', async (_req, res) => {
+  res.json({ ok: true, categories: await listCategories() });
 });
 
 /** Re-prices a basket so the storefront can show live totals before checkout. */
-productsRouter.post('/quote', (req, res) => {
-  const quote = priceBasket(req.body?.items, req.body?.paymentMethod ?? 'upi');
+productsRouter.post('/quote', async (req, res) => {
+  const quote = await priceBasket(req.body?.items, req.body?.paymentMethod ?? 'upi');
   res.json({ ok: true, quote });
 });
 
-productsRouter.get('/:idOrSlug', (req, res) => {
+productsRouter.get('/:idOrSlug', async (req, res) => {
   const key = str(req.params.idOrSlug, 120);
-  const product = /^\d+$/.test(key) ? getProduct(Number(key)) : getProductBySlug(key);
+  const product = /^\d+$/.test(key) ? await getProduct(Number(key)) : await getProductBySlug(key);
 
   if (!product || !product.active) throw notFound('That product could not be found.');
   res.json({ ok: true, product });

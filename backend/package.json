@@ -15,8 +15,10 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "pg": "^8.23.1",
     "razorpay": "^2.9.6"
   }
 }

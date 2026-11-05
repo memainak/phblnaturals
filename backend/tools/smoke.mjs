@@ -7,6 +7,7 @@
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,8 +15,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 4987;
 const BASE = `http://127.0.0.1:${PORT}`;
 const ADMIN_KEY = 'smoke-admin-key';
-const DB = path.join(ROOT, 'data', 'phbl.db');
-const BACKUP = `${DB}.smoke-backup`;
+
+// The suite runs against a throwaway database so a developer's own data is
+// never touched: a scratch PGlite directory by default, or SMOKE_DATABASE_URL
+// when you want to check the port against real Postgres.
+const SCRATCH = fs.mkdtempSync(path.join(os.tmpdir(), 'phbl-smoke-'));
+const SMOKE_DATABASE_URL = process.env.SMOKE_DATABASE_URL || '';
 
 let passed = 0;
 const failures = [];
@@ -75,12 +80,6 @@ async function waitForServer(child) {
   throw new Error('server did not start within 12s');
 }
 
-// Keep any real database out of the way.
-if (fs.existsSync(DB)) fs.renameSync(DB, BACKUP);
-for (const suffix of ['-wal', '-shm']) {
-  if (fs.existsSync(DB + suffix)) fs.rmSync(DB + suffix);
-}
-
 const child = spawn(process.execPath, ['server.js'], {
   cwd: ROOT,
   env: {
@@ -90,7 +89,11 @@ const child = spawn(process.execPath, ['server.js'], {
     ADMIN_KEY,
     SESSION_SECRET: 'smoke-session-secret',
     RAZORPAY_KEY_ID: '',
-    RAZORPAY_KEY_SECRET: ''
+    RAZORPAY_KEY_SECRET: '',
+    DATABASE_URL: SMOKE_DATABASE_URL,
+    POSTGRES_URL: '',
+    // Ignored when SMOKE_DATABASE_URL is set; otherwise PGlite lives here.
+    PHBL_DATA_DIR: SCRATCH
   },
   stdio: ['ignore', 'pipe', 'pipe']
 });
@@ -101,10 +104,11 @@ child.stderr.on('data', d => serverLog.push(d.toString()));
 
 function restore() {
   child.kill('SIGKILL');
-  for (const suffix of ['', '-wal', '-shm']) {
-    if (fs.existsSync(DB + suffix)) fs.rmSync(DB + suffix);
+  try {
+    fs.rmSync(SCRATCH, { recursive: true, force: true });
+  } catch {
+    /* the scratch directory is already gone */
   }
-  if (fs.existsSync(BACKUP)) fs.renameSync(BACKUP, DB);
 }
 
 try {
@@ -114,6 +118,8 @@ try {
   console.log('\nhealth, config and catalogue');
   const health = await call('/api/health');
   ok('GET /api/health', health.status === 200 && health.data.ok);
+  ok('running on Postgres', ['postgres', 'pglite'].includes(health.data.database),
+    `database ${health.data.database}`);
 
   const conf = await call('/api/config');
   ok('GET /api/config exposes pricing', conf.data.pricing?.shippingFlat >= 0);

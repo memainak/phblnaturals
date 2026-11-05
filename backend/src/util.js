@@ -131,7 +131,7 @@ export function orderId() {
   return `PHBL-${tail}`;
 }
 
-export const nowIso = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
+export const nowIso = () => new Date().toISOString();
 
-export const addDays = days =>
-  new Date(Date.now() + days * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);
+/** A Date `days` from now — passed straight to Postgres as a timestamptz. */
+export const addDays = days => new Date(Date.now() + days * 86_400_000);

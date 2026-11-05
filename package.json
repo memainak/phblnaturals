@@ -1,0 +1,21 @@
+{
+  "name": "phbl-naturals",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PHBL Naturals storefront: static site on Vercel, Express API on Vercel Functions, Postgres for data.",
+  "scripts": {
+    "build": "node scripts/build-static.mjs",
+    "dev": "npm --prefix backend run dev",
+    "smoke": "npm --prefix backend run smoke"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "pg": "^8.23.1",
+    "razorpay": "^2.9.6"
+  }
+}

@@ -1,31 +1,14 @@
 import { config } from './config.js';
-import { db } from './db.js';
+import { all, one, query } from './db.js';
 import { HttpError, bad, posInt } from './util.js';
 
 /* --------------------------------------------------------------- products */
 
 const PRODUCT_COLUMNS = `
-  id, slug, name, category, price, old_price AS oldPrice, badge, size, image,
-  description AS desc, ingredients, benefits, usage, stock, active, sort_order AS sortOrder
+  id, slug, name, category, price, old_price AS "oldPrice", badge, size, image,
+  description AS "desc", ingredients, benefits, usage_text AS usage, stock,
+  active, sort_order AS "sortOrder"
 `;
-
-const selectActiveProducts = db.prepare(`
-  SELECT ${PRODUCT_COLUMNS} FROM products
-  WHERE active = 1
-  ORDER BY sort_order, id
-`);
-
-const selectAllProducts = db.prepare(`
-  SELECT ${PRODUCT_COLUMNS} FROM products ORDER BY sort_order, id
-`);
-
-const selectProductById = db.prepare(`
-  SELECT ${PRODUCT_COLUMNS} FROM products WHERE id = ?
-`);
-
-const selectProductBySlug = db.prepare(`
-  SELECT ${PRODUCT_COLUMNS} FROM products WHERE slug = ?
-`);
 
 const shape = row =>
   row && {
@@ -35,58 +18,63 @@ const shape = row =>
     oldPrice: row.oldPrice ?? null
   };
 
-export const listProducts = ({ includeInactive = false } = {}) =>
-  (includeInactive ? selectAllProducts : selectActiveProducts).all().map(shape);
-
-export const getProduct = id => shape(selectProductById.get(id));
-
-export const getProductBySlug = slug => shape(selectProductBySlug.get(slug));
-
-export function listCategories() {
-  return db
-    .prepare(
-      `SELECT category AS name, COUNT(*) AS count
-       FROM products WHERE active = 1
-       GROUP BY category ORDER BY category`
-    )
-    .all();
+export async function listProducts({ includeInactive = false } = {}) {
+  const rows = await all(
+    `SELECT ${PRODUCT_COLUMNS} FROM products
+     ${includeInactive ? '' : 'WHERE active = TRUE'}
+     ORDER BY sort_order, id`
+  );
+  return rows.map(shape);
 }
+
+export const getProduct = async id =>
+  shape(await one(`SELECT ${PRODUCT_COLUMNS} FROM products WHERE id = $1`, [id]));
+
+export const getProductBySlug = async slug =>
+  shape(await one(`SELECT ${PRODUCT_COLUMNS} FROM products WHERE slug = $1`, [slug]));
+
+export const listCategories = () =>
+  all(
+    `SELECT category AS name, COUNT(*)::int AS count
+     FROM products WHERE active = TRUE
+     GROUP BY category ORDER BY category`
+  );
 
 /* ------------------------------------------------------------------- cart */
 
-const selectCart = db.prepare(
-  `SELECT product_id AS productId, qty FROM carts WHERE user_id = ? ORDER BY updated_at`
-);
-const upsertCartItem = db.prepare(`
-  INSERT INTO carts (user_id, product_id, qty, updated_at)
-  VALUES (?, ?, ?, datetime('now'))
-  ON CONFLICT (user_id, product_id)
-  DO UPDATE SET qty = excluded.qty, updated_at = datetime('now')
-`);
-const deleteCartItem = db.prepare(`DELETE FROM carts WHERE user_id = ? AND product_id = ?`);
-const clearCartRows = db.prepare(`DELETE FROM carts WHERE user_id = ?`);
+export const getCartRows = userId =>
+  all(
+    `SELECT product_id AS "productId", qty FROM carts
+     WHERE user_id = $1 ORDER BY updated_at, product_id`,
+    [userId]
+  );
 
-export const getCartRows = userId => selectCart.all(userId);
-
-export function setCartItem(userId, productId, qty) {
-  const product = getProduct(productId);
+export async function setCartItem(userId, productId, qty) {
+  const product = await getProduct(productId);
   if (!product || !product.active) throw bad(`Product ${productId} is not available.`);
 
   if (qty <= 0) {
-    deleteCartItem.run(userId, productId);
+    await query('DELETE FROM carts WHERE user_id = $1 AND product_id = $2', [userId, productId]);
     return;
   }
-  upsertCartItem.run(userId, productId, Math.min(qty, 99));
+
+  await query(
+    `INSERT INTO carts (user_id, product_id, qty, updated_at)
+     VALUES ($1, $2, $3, now())
+     ON CONFLICT (user_id, product_id)
+     DO UPDATE SET qty = EXCLUDED.qty, updated_at = now()`,
+    [userId, productId, Math.min(qty, 99)]
+  );
 }
 
-export function replaceCart(userId, items) {
-  clearCartRows.run(userId);
+export async function replaceCart(userId, items) {
+  await query('DELETE FROM carts WHERE user_id = $1', [userId]);
   for (const { productId, qty } of items) {
-    if (qty > 0) setCartItem(userId, productId, qty);
+    if (qty > 0) await setCartItem(userId, productId, qty);
   }
 }
 
-export const clearCart = userId => clearCartRows.run(userId);
+export const clearCart = userId => query('DELETE FROM carts WHERE user_id = $1', [userId]);
 
 /* ---------------------------------------------------------------- pricing */
 
@@ -94,7 +82,7 @@ export const clearCart = userId => clearCartRows.run(userId);
  * Re-prices a basket from the database. The client's prices are never trusted:
  * only product ids and quantities are read from the request.
  */
-export function priceBasket(rawItems, paymentMethod = 'upi') {
+export async function priceBasket(rawItems, paymentMethod = 'upi') {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
     throw bad('Your cart is empty.');
   }
@@ -115,7 +103,7 @@ export function priceBasket(rawItems, paymentMethod = 'upi') {
   let subtotal = 0;
 
   for (const [productId, qty] of merged) {
-    const product = getProduct(productId);
+    const product = await getProduct(productId);
 
     if (!product || !product.active) {
       problems.push({ productId, reason: 'unavailable' });
@@ -189,23 +177,29 @@ export const isOnlineMethod = method => method !== 'cod';
 
 /* ------------------------------------------------------------------ stock */
 
-const decrementStock = db.prepare(
-  `UPDATE products SET stock = stock - ?, updated_at = datetime('now')
-   WHERE id = ? AND stock >= ?`
-);
-const incrementStock = db.prepare(
-  `UPDATE products SET stock = stock + ?, updated_at = datetime('now') WHERE id = ?`
-);
-
-export function reserveStock(items) {
+/**
+ * Decrements stock for each line. The `stock >= $1` guard makes the check and
+ * the write one atomic statement, so two shoppers cannot take the last unit.
+ * `client` is the transaction handle from transaction().
+ */
+export async function reserveStock(client, items) {
   for (const item of items) {
-    const { changes } = decrementStock.run(item.qty, item.productId, item.qty);
-    if (!changes) {
+    const { rowCount } = await client.query(
+      `UPDATE products SET stock = stock - $1, updated_at = now()
+       WHERE id = $2 AND stock >= $1`,
+      [item.qty, item.productId]
+    );
+    if (!rowCount) {
       throw new HttpError(409, `${item.name} just went out of stock. Please adjust your cart.`);
     }
   }
 }
 
-export function releaseStock(items) {
-  for (const item of items) incrementStock.run(item.qty, item.productId);
+export async function releaseStock(client, items) {
+  for (const item of items) {
+    await client.query(
+      'UPDATE products SET stock = stock + $1, updated_at = now() WHERE id = $2',
+      [item.qty, item.productId]
+    );
+  }
 }

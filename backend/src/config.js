@@ -22,8 +22,15 @@ export const config = {
     process.env.FRONTEND_DIR,
     '../frontend/phbl_naturals_website'
   ),
-  dataDir: path.join(ROOT, 'data'),
-  dbFile: path.join(ROOT, 'data', 'phbl.db'),
+  // PHBL_DATA_DIR lets the test harness point at a scratch directory.
+  dataDir: resolveFromRoot(process.env.PHBL_DATA_DIR, 'data'),
+
+  // Postgres connection string (Neon, Vercel Postgres, Supabase, plain
+  // Postgres). When it is absent the server falls back to PGlite — real
+  // Postgres compiled to WASM, stored in data/pg — so local development and
+  // the test suite need no database server at all.
+  databaseUrl: (process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim(),
+  pgliteDir: path.join(resolveFromRoot(process.env.PHBL_DATA_DIR, 'data'), 'pg'),
 
   corsOrigins: (process.env.CORS_ORIGINS || '')
     .split(',')
@@ -52,6 +59,8 @@ export const razorpayEnabled = Boolean(
   config.razorpay.keyId && config.razorpay.keySecret
 );
 
+export const usingManagedPostgres = Boolean(config.databaseUrl);
+
 /** Warnings worth printing at boot, and hard stops in production. */
 export function checkConfig() {
   const warnings = [];
@@ -70,11 +79,19 @@ export function checkConfig() {
   } else if (!config.razorpay.webhookSecret) {
     warnings.push('RAZORPAY_WEBHOOK_SECRET is not set. Payment webhooks will be rejected.');
   }
+  if (!usingManagedPostgres) {
+    warnings.push(
+      'DATABASE_URL is not set. Using the local PGlite database in data/pg — fine for development, not for production.'
+    );
+  }
 
   if (config.env === 'production') {
     const fatal = [];
     if (!process.env.SESSION_SECRET) fatal.push('SESSION_SECRET');
     if (!config.adminKey) fatal.push('ADMIN_KEY');
+    // On a serverless host the filesystem is ephemeral, so a local database
+    // would silently lose every order. Managed Postgres is required.
+    if (!usingManagedPostgres) fatal.push('DATABASE_URL');
     if (fatal.length) {
       throw new Error(`Refusing to start in production without: ${fatal.join(', ')}`);
     }
