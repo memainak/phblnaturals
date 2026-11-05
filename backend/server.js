@@ -1,6 +1,6 @@
 /**
  * Long-running entry point (local development, Render, Railway, Fly, a VM).
- * On Firebase the same app is served by functions.js instead.
+ * On Vercel the same app is served by api/index.js instead.
  */
 import { bootstrap, createApp } from './src/app.js';
 import { checkConfig, config } from './src/config.js';
