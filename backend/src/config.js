@@ -14,6 +14,20 @@ const num = (value, fallback) => {
 const resolveFromRoot = (value, fallback) =>
   path.resolve(ROOT, value && value.trim() ? value.trim() : fallback);
 
+/**
+ * A value that is allowed to be absent.
+ *
+ * Secret Manager cannot hold an empty string, and Cloud Functions refuses to
+ * deploy while a secret that `functions.js` declares does not exist. So the
+ * Razorpay secrets can be created as the literal `unset` to get the shop
+ * deployed on cash on delivery, and that placeholder reads back here as "not
+ * configured" rather than switching online payment on with a junk key.
+ */
+const optional = value => {
+  const trimmed = String(value ?? '').trim();
+  return trimmed.toLowerCase() === 'unset' ? '' : trimmed;
+};
+
 export const config = {
   env: process.env.NODE_ENV || 'development',
   port: num(process.env.PORT, 4000),
@@ -47,9 +61,9 @@ export const config = {
   adminKey: process.env.ADMIN_KEY || '',
 
   razorpay: {
-    keyId: process.env.RAZORPAY_KEY_ID || '',
-    keySecret: process.env.RAZORPAY_KEY_SECRET || '',
-    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || ''
+    keyId: optional(process.env.RAZORPAY_KEY_ID),
+    keySecret: optional(process.env.RAZORPAY_KEY_SECRET),
+    webhookSecret: optional(process.env.RAZORPAY_WEBHOOK_SECRET)
   },
 
   pricing: {

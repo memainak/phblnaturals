@@ -77,8 +77,12 @@ firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET
 ```
 
 All five must exist before the first deploy, because `functions.js` declares
-them — set the Razorpay ones to a single space for now if you do not have the
-keys yet. Without real keys the shop runs cash-on-delivery only, and online
+them. If you do not have the Razorpay keys yet, create those three as the
+literal `unset`, which the server reads as "not configured":
+
+```bash
+printf 'unset' | firebase functions:secrets:set RAZORPAY_KEY_ID --data-file -
+``` Without real keys the shop runs cash-on-delivery only, and online
 orders are saved as `pending` with a clear message to the shopper.
 
 In production the server **refuses to start** without `SESSION_SECRET` and
