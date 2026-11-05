@@ -3,17 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "PHBL Naturals storefront: static site on Firebase Hosting, Express API on Cloud Functions, Supabase Postgres for data.",
+  "description": "PHBL Naturals storefront: static site on Vercel, Express API on a Vercel Function, Supabase Postgres for data.",
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "dev": "npm --prefix backend run dev",
     "smoke": "npm --prefix backend run smoke",
-    "race": "npm --prefix backend run race",
-    "deploy": "npm run build && firebase deploy",
-    "deploy:hosting": "npm run build && firebase deploy --only hosting",
-    "deploy:api": "firebase deploy --only functions"
+    "race": "npm --prefix backend run race"
   },
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "pg": "^8.23.1",
+    "razorpay": "^2.9.6"
   }
 }

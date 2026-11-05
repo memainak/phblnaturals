@@ -22,11 +22,14 @@ async function createManagedDriver() {
   // does not offer it.
   const local = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(config.databaseUrl);
 
-  // On Cloud Functions every instance gets its own pool, so the ceiling is
-  // (instances x max), not max. K_SERVICE is set by the Cloud Run environment
-  // the function runs on; a small pool there keeps a burst of cold starts from
-  // exhausting Postgres. A long-running server has one pool and can hold more.
-  const serverless = Boolean(process.env.K_SERVICE || process.env.FUNCTION_TARGET);
+  // On a serverless host every instance gets its own pool, so the ceiling is
+  // (instances x max), not max. VERCEL is set on Vercel Functions; K_SERVICE
+  // and FUNCTION_TARGET cover Google's runtimes. A small pool there keeps a
+  // burst of cold starts from exhausting Postgres. A long-running server has
+  // one pool and can hold more.
+  const serverless = Boolean(
+    process.env.VERCEL || process.env.K_SERVICE || process.env.FUNCTION_TARGET
+  );
 
   const pool = new pg.Pool({
     connectionString: config.databaseUrl,

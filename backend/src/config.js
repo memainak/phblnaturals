@@ -9,15 +9,10 @@ export const ROOT = path.resolve(here, '..');
 /**
  * Local configuration lives in `.env.local`, not `.env`.
  *
- * This folder is the Cloud Functions source directory, and firebase-functions
- * treats a `.env` here as the deployed environment: it would ship local values
- * — NODE_ENV=development, a dev SESSION_SECRET, a FIRESTORE_EMULATOR_HOST
- * pointing at a machine that does not exist — straight to production, where
- * they would override Secret Manager. `.env.local` is only ever applied to the
- * emulators, so it cannot leak that way.
- *
- * `.env` is still read if one exists, for anyone who made it by hand, but
- * `.env.local` wins and `firebase deploy` will refuse while a `.env` is here.
+ * Keeping local values in `.env.local` rather than `.env` means a tool that
+ * bundles a folder's `.env` (some deploy CLIs do) can never ship development
+ * settings to production. Both are gitignored, and `.env.local` wins if both
+ * exist.
  */
 dotenv.config({
   path: [path.join(ROOT, '.env.local'), path.join(ROOT, '.env')],
@@ -62,7 +57,7 @@ export const config = {
   // data/pg — so local development and the test suite need no database server
   // and no Docker.
   //
-  // On Cloud Functions, use Supabase's **connection pooler** URI (port 6543),
+  // On Vercel, use Supabase's **connection pooler** URI (port 6543),
   // not the direct one (5432). Each function instance opens its own pool, and
   // Postgres has a hard connection limit that a handful of cold starts would
   // otherwise exhaust. See DEPLOY.md.

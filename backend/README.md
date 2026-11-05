@@ -6,7 +6,7 @@ admin dashboard.
 
 Node 22. Data lives in **Postgres** — Supabase in production, PGlite locally.
 The same Express app runs two ways: `node server.js` for development, and as a
-single Cloud Function (`functions.js`) in production.
+single Vercel Function (`../api/index.js`) in production.
 
 ## Run it
 
@@ -25,9 +25,7 @@ npm run dev
 - Admin — http://localhost:4000/admin.html (paste your `ADMIN_KEY`)
 
 The catalogue is seeded automatically on first boot from `src/catalogue.js`.
-Local settings go in `.env.local`, not `.env` — this folder is the Cloud
-Functions source directory, and Firebase treats a `.env` here as the deployed
-production environment.
+Local settings go in `.env.local` (gitignored).
 
 ```bash
 npm run smoke   # 68 end-to-end checks against a scratch database
@@ -171,7 +169,6 @@ Payment: `unpaid → paid`, or `failed` / `refunded`.
 ```
 backend/
   server.js               local boot: middleware order, static + bridge injection
-  functions.js            Cloud Functions entry (same app, API only)
   src/
     config.js             env, defaults, production guards
     db.js                 Postgres schema, pooling and transactions
