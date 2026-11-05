@@ -11,23 +11,42 @@ The repo is ready to deploy. Everything below is done once; after that every
 The storefront folder is never modified. The build copies it and injects the
 `/storefront-api.js` tag into the copy.
 
-## 1. Create the project
+## 1. Fix the existing project (do not create a new one)
 
-In the Vercel dashboard: **Add New → Project → Import** `memainak/phblnaturals`.
+You already have two Vercel projects connected to `memainak/phblnaturals`:
+**`backend`** and **`server`**. They are not stray — both auto-deploy on every
+push, and both have **failed on every push since the first commit**, because
+each points at a subfolder. The function entry (`api/index.js`) and the static
+build both live at the repository root.
 
-Leave the build settings alone — `vercel.json` already sets them:
+So repurpose one instead of deleting and re-importing — it keeps the GitHub
+connection that already works.
 
-| Setting | Value |
+In **`backend` → Settings → Build and Deployment**:
+
+| Setting | Change to |
 | --- | --- |
-| Framework preset | Other |
-| Build command | `node scripts/build-static.mjs` |
-| Output directory | `dist` |
-| Root directory | `./` (the repository root, **not** `backend/`) |
+| Root Directory | `./` (clear it — currently `backend`) |
+| Framework Preset | Other (currently Express) |
+| Build Command | `node scripts/build-static.mjs` |
+| Output Directory | `dist` |
+| Node.js Version | 22.x |
 
-> You already have projects named `backend` and `server` in this Vercel team,
-> created the same day. If those were attempts at this storefront, delete them:
-> deploying the `backend/` folder on its own cannot work, because the function
-> and the static build both expect the repository root.
+Rename it to something sensible while you are there (**Settings → General →
+Project Name**), since `backend` now serves the whole site.
+
+Then delete the **`server`** project — it points at the old `server/` folder,
+which is superseded, and leaving it connected means a failed deployment email
+on every push.
+
+### Turn off Vercel Authentication
+
+`backend` currently has **Vercel Authentication enabled for all deployments
+except custom domains**. That means anyone opening the `.vercel.app` URL is
+asked to log into Vercel first — your shoppers cannot see the store.
+
+**Settings → Deployment Protection → Vercel Authentication → Disabled**, or
+add a custom domain, which is exempt.
 
 ## 2. Add a database
 
