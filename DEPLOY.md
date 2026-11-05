@@ -63,7 +63,7 @@ otherwise fall back to a local file and lose orders silently.
 Push to `main` (or **Deployments → Redeploy**), then:
 
 ```bash
-curl https://<your-app>.vercel.app/api/health
+curl https://www.phblnaturals.com/api/health
 ```
 
 - `"database": "postgres"` is correct
@@ -76,14 +76,20 @@ stock reduced.
 ## 5. Razorpay webhook
 
 Razorpay → **Settings → Webhooks → Add**: URL
-`https://<your-app>.vercel.app/api/payments/razorpay/webhook`, events
+`https://www.phblnaturals.com/api/payments/razorpay/webhook`, events
 `payment.captured` and `payment.failed`. Put the signing secret in
 `RAZORPAY_WEBHOOK_SECRET` and redeploy.
 
 ## 6. Custom domain
 
-**Settings → Domains → Add**. Session cookies are `secure` in production, which
+`phblnaturals.com` and `www.phblnaturals.com` are attached to the project, with DNS on
+Vercel's nameservers. The apex currently 308-redirects to `www`, so `www` is the
+canonical address. To make the bare domain canonical instead, swap that redirect
+under **Settings → Domains**. Session cookies are `secure` in production, which
 Vercel's HTTPS satisfies.
+
+**Stock and order management:** `https://phblnaturals.com/admin` (redirects to
+`www`). Sign in with `ADMIN_KEY`.
 
 ## Region
 
